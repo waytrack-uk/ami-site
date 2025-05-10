@@ -1,6 +1,6 @@
 // src/components/UserProfile.jsx
 import React, { useEffect, useState } from "react";
-import { useParams, Link } from "react-router-dom";
+import { useParams, Link, useNavigate } from "react-router-dom";
 import {
   collection,
   getDocs,
@@ -13,6 +13,7 @@ import { db } from "../firebase";
 
 const UserProfile = () => {
   const { userId } = useParams();
+  const navigate = useNavigate(); // Move this outside of CategoryWidget
   const [user, setUser] = useState(null);
   const [entries, setEntries] = useState([]);
   const [status, setStatus] = useState("Loading...");
@@ -95,6 +96,13 @@ const UserProfile = () => {
 
   // Widget component to display a category of entries
   const CategoryWidget = ({ title, entries, backgroundColor }) => {
+    // Remove useNavigate from here
+
+    // Function to navigate to category page
+    const handleCategoryClick = () => {
+      navigate(`/category/${title.toLowerCase()}`);
+    };
+
     // Function to get gradient based on category title
     const getGradientStyle = (title) => {
       switch (title.toLowerCase()) {
@@ -128,6 +136,7 @@ const UserProfile = () => {
     return (
       <div
         className="font-serif"
+        onClick={handleCategoryClick}
         style={{
           ...getGradientStyle(title),
           borderRadius: "16px",
@@ -135,6 +144,14 @@ const UserProfile = () => {
           marginBottom: "20px",
           minHeight: "200px", // Ensures widgets maintain minimum size
           fontFamily: "Baskerville, serif",
+          cursor: "pointer", // Add cursor pointer for better UX
+          transition: "transform 0.2s ease", // Add transition for hover effect
+        }}
+        onMouseOver={(e) => {
+          e.currentTarget.style.transform = "scale(1.02)";
+        }}
+        onMouseOut={(e) => {
+          e.currentTarget.style.transform = "scale(1)";
         }}
       >
         <h2

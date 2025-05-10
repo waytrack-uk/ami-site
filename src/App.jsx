@@ -1,7 +1,8 @@
+// App.jsx
 import { BrowserRouter, Routes, Route } from "react-router-dom";
 import UsersList from "./components/UsersList";
-import UserArchives from "./components/UserArchives";
-import UserProfile from "./components/UserProfile"; // Import the new component
+import UserProfile from "./components/UserProfile";
+import CategoryPage from "./components/CategoryPage"; // Import the category page
 
 function App() {
   return (
@@ -9,6 +10,7 @@ function App() {
       <Routes>
         <Route path="/" element={<UsersList />} />
         <Route path="/:userId" element={<UserProfile />} />
+        <Route path="/category/:categoryName" element={<CategoryPage />} />
       </Routes>
     </BrowserRouter>
   );
