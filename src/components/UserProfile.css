@@ -1,0 +1,94 @@
+/* UserProfile.css */
+@import url("https://fonts.googleapis.com/css2?family=Libre+Baskerville:wght@400;700&display=swap");
+
+.profile-container * {
+  font-family: "Libre Baskerville", serif !important;
+}
+
+.profile-container h1.profile-title {
+  font-size: 32px;
+  margin: 0 !important; /* Stronger specificity with !important */
+  font-weight: 700 !important;
+  letter-spacing: 0.02em;
+  text-rendering: optimizeLegibility;
+}
+
+/* If you need to adjust the margin, use this */
+.profile-container .profile-header h1.profile-title {
+  margin-right: 20px !important; /* Example - adjust as needed */
+}
+
+/* Adding padding to the bottom to ensure content isn't hidden behind the footer */
+.profile-container {
+  padding-bottom: 70px !important;
+}
+
+/* Footer styles */
+.footer-button {
+  background-color: #111;
+  color: white;
+  border: none;
+  border-radius: 25px;
+  padding: 12px 30px;
+  font-size: 16px;
+  font-family: "Libre Baskerville", serif;
+  cursor: pointer;
+  box-shadow: 0 2px 5px rgba(0, 0, 0, 0.2);
+  transition: all 0.2s ease;
+}
+
+.footer-button:hover {
+  background-color: #333;
+  transform: translateY(-2px);
+}
+
+.category-title {
+  color: white;
+  font-size: 28px;
+  margin-bottom: 15px;
+  font-weight: 700 !important;
+  letter-spacing: 0.03em;
+  text-rendering: optimizeLegibility;
+}
+
+.category-widget {
+  border-radius: 16px;
+  padding: 20px;
+  margin-bottom: 20px;
+  min-height: 200px;
+  cursor: pointer;
+  transition: transform 0.2s ease;
+}
+
+.category-widget:hover {
+  transform: scale(1.02);
+}
+
+.image-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(80px, 1fr));
+  gap: 10px;
+  min-height: 120px;
+}
+
+.entry-image {
+  width: 100%;
+  aspect-ratio: 2/3;
+  object-fit: cover;
+  border-radius: 8px;
+  max-height: 120px;
+}
+
+.profile-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  margin-bottom: 30px;
+}
+
+.profile-avatar {
+  width: 80px;
+  height: 80px;
+  border-radius: 50%;
+  object-fit: cover;
+}

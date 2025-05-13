@@ -1,13 +1,15 @@
 // src/components/CategoryPage.jsx
 import React, { useEffect, useState } from "react";
-import { useParams, Link } from "react-router-dom";
+import { useParams, Link, useLocation } from "react-router-dom";
 import { collection, getDocs, query, where } from "firebase/firestore";
 import { db } from "../firebase";
 
 const CategoryPage = () => {
   const { categoryName } = useParams();
+  const location = useLocation();
   const [entries, setEntries] = useState([]);
   const [loading, setLoading] = useState(true);
+  const [userId, setUserId] = useState(null);
 
   // Function to get gradient based on category name
   const getGradientStyle = (category) => {
@@ -24,6 +26,30 @@ const CategoryPage = () => {
         return "linear-gradient(to bottom right, #333, #222, #111)";
     }
   };
+
+  // Function to normalize category name for database queries
+  const normalizeCategoryName = (category) => {
+    // Convert category name to singular form for database queries when needed
+    if (category.toLowerCase() === "podcasts") {
+      return "podcast";
+    }
+    return category.toLowerCase();
+  };
+
+  // Extract userId from URL state or query parameters
+  useEffect(() => {
+    // Check if userId was passed in location state
+    if (location.state && location.state.userId) {
+      setUserId(location.state.userId);
+    } else {
+      // Extract userId from URL query parameters if present
+      const params = new URLSearchParams(location.search);
+      const userIdFromQuery = params.get("userId");
+      if (userIdFromQuery) {
+        setUserId(userIdFromQuery);
+      }
+    }
+  }, [location]);
 
   // Group entries by month
   const groupEntriesByMonth = (entries) => {
@@ -57,11 +83,32 @@ const CategoryPage = () => {
       try {
         setLoading(true);
 
-        // Create a query to get all entries for this category
-        const entriesQuery = query(
-          collection(db, "archives_v3"),
-          where("category", "==", categoryName.toLowerCase())
-        );
+        // Normalize the category name for database query
+        const normalizedCategoryName = normalizeCategoryName(categoryName);
+
+        let entriesQuery;
+
+        if (userId) {
+          // If we have a userId, filter by both category and userId
+          entriesQuery = query(
+            collection(db, "archives_v3"),
+            where("category", "==", normalizedCategoryName),
+            where("userId", "==", userId)
+          );
+          console.log(
+            `Fetching entries for category: ${normalizedCategoryName} and userId: ${userId}`
+          );
+        } else {
+          // If no userId is available, just filter by category
+          // This is a fallback but might show entries from all users
+          console.warn(
+            "No userId available, fetching entries for category only"
+          );
+          entriesQuery = query(
+            collection(db, "archives_v3"),
+            where("category", "==", normalizedCategoryName)
+          );
+        }
 
         const entriesSnapshot = await getDocs(entriesQuery);
 
@@ -103,7 +150,7 @@ const CategoryPage = () => {
     }
 
     fetchCategoryEntries();
-  }, [categoryName]);
+  }, [categoryName, userId]);
 
   // Apply gradient to the entire body when component mounts
   useEffect(() => {
@@ -141,6 +188,23 @@ const CategoryPage = () => {
     return numRating.toFixed(1);
   };
 
+  // Function to get display text for category
+  const getCategoryDisplayText = (baseCategoryName, monthYear) => {
+    // Handle category name differences for display
+    switch (baseCategoryName.toLowerCase()) {
+      case "podcasts":
+        return `Listened in ${monthYear}`;
+      case "books":
+        return `Read in ${monthYear}`;
+      case "tv":
+        return `Watched in ${monthYear}`;
+      case "music":
+        return `Listened in ${monthYear}`;
+      default:
+        return `Added in ${monthYear}`;
+    }
+  };
+
   return (
     <div
       className="font-serif"
@@ -156,7 +220,7 @@ const CategoryPage = () => {
       {/* Back button */}
       <div style={{ marginBottom: "25px" }}>
         <Link
-          to="/"
+          to={userId ? `/${userId}` : "/"}
           style={{
             color: "white",
             textDecoration: "none",
@@ -184,15 +248,7 @@ const CategoryPage = () => {
                     fontWeight: "bold",
                   }}
                 >
-                  {categoryName === "music"
-                    ? `Listened in ${monthYear}`
-                    : categoryName === "books"
-                    ? `Read in ${monthYear}`
-                    : categoryName === "tv"
-                    ? `Watched in ${monthYear}`
-                    : categoryName === "podcasts"
-                    ? `Heard in ${monthYear}`
-                    : `Added in ${monthYear}`}
+                  {getCategoryDisplayText(categoryName, monthYear)}
                 </h2>
               </div>
 

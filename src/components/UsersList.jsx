@@ -1,15 +1,15 @@
-// src/components/UsersList.jsx
 import React, { useEffect, useState } from "react";
 import { Link } from "react-router-dom";
 import { collection, getDocs } from "firebase/firestore";
 import { db } from "../firebase";
 
-const UsersList = () => {
+const ArchivePage = () => {
+  // State variables
   const [users, setUsers] = useState([]);
   const [status, setStatus] = useState("Loading...");
   const [searchTerm, setSearchTerm] = useState("");
   const [filteredUsers, setFilteredUsers] = useState([]);
-  const [isSearchActive, setIsSearchActive] = useState(false);
+  const [hasSearched, setHasSearched] = useState(false);
 
   // Fetch users when component loads
   useEffect(() => {
@@ -46,283 +46,145 @@ const UsersList = () => {
   useEffect(() => {
     if (searchTerm.trim() === "") {
       setFilteredUsers(users);
+      if (searchTerm === "" && hasSearched) {
+        setHasSearched(false);
+      }
     } else {
+      const term = searchTerm.toLowerCase();
+
+      // Filter users that match the search term
       const filtered = users.filter(
         (user) =>
-          user.username?.toLowerCase().includes(searchTerm.toLowerCase()) ||
-          user.fullName?.toLowerCase().includes(searchTerm.toLowerCase()) ||
-          (user.name &&
-            user.name.toLowerCase().includes(searchTerm.toLowerCase()))
+          user.username?.toLowerCase().includes(term) ||
+          user.fullName?.toLowerCase().includes(term) ||
+          (user.name && user.name.toLowerCase().includes(term))
       );
-      setFilteredUsers(filtered);
+
+      // Sort filtered results
+      const sorted = [...filtered].sort((a, b) => {
+        // Get usernames, defaulting to empty string if undefined
+        const usernameA = (a.username || "").toLowerCase();
+        const usernameB = (b.username || "").toLowerCase();
+
+        // Check if username starts with the search term
+        const aStartsWith = usernameA.startsWith(term);
+        const bStartsWith = usernameB.startsWith(term);
+
+        // If one starts with the term but the other doesn't, prioritize the one that does
+        if (aStartsWith && !bStartsWith) return -1;
+        if (!aStartsWith && bStartsWith) return 1;
+
+        // If both start with the term or neither starts with the term,
+        // sort alphabetically by username
+        return usernameA.localeCompare(usernameB);
+      });
+
+      setFilteredUsers(sorted);
+      setHasSearched(true);
     }
   }, [searchTerm, users]);
 
   // Handle search input change
   const handleSearchChange = (e) => {
     setSearchTerm(e.target.value);
+    if (e.target.value.trim() !== "" && !hasSearched) {
+      setHasSearched(true);
+    }
   };
 
+  // Handle search clear
   const handleClearSearch = () => {
     setSearchTerm("");
+    setHasSearched(false);
   };
 
-  const activateSearch = () => {
-    setIsSearchActive(true);
+  // Helper function to create a safe URL from username
+  const getUserRouteParam = (user) => {
+    // If username is missing, fall back to ID
+    if (!user.username) return user.id;
+
+    // Otherwise encode the username to handle special characters
+    return encodeURIComponent(user.username);
   };
 
-  const deactivateSearch = () => {
-    setIsSearchActive(false);
-    setSearchTerm("");
-  };
-
-  // Common styling for both states
-  const containerStyle = {
-    minHeight: "100vh",
-    fontFamily: "-apple-system, BlinkMacSystemFont, sans-serif",
-    backgroundColor: "#f8f6f2", // Beige color from the images
-    display: "flex",
-    flexDirection: "column",
-  };
-
-  // Render home screen with "Be Curious..." text
-  const renderHomeScreen = () => (
-    <div style={containerStyle}>
-      <div
+  return (
+    <div
+      className="min-h-screen w-full font-sans flex flex-col items-center pt-20 gap-8"
+      style={{ backgroundColor: "#f2e8d5" }}
+    >
+      <h1
+        className="text-6xl md:text-8xl"
         style={{
-          flex: 1,
-          display: "flex",
-          flexDirection: "column",
-          alignItems: "center",
-          justifyContent: "center",
+          fontFamily: "Baskerville, serif",
         }}
       >
-        <h1
-          style={{
-            fontSize: "42px",
-            fontFamily: "serif",
-            fontWeight: "normal",
-          }}
-        >
-          Be Curious...
-        </h1>
-      </div>
+        Archive
+      </h1>
 
-      {/* Search button at bottom */}
-      <div
-        style={{
-          padding: "20px",
-          position: "fixed",
-          bottom: "0",
-          left: "0",
-          right: "0",
-          display: "flex",
-          justifyContent: "center",
-        }}
-      >
-        <div
-          style={{
-            backgroundColor: "#f1f1f1",
-            borderRadius: "20px",
-            padding: "10px 20px",
-            display: "flex",
-            alignItems: "center",
-            gap: "8px",
-            cursor: "pointer",
-          }}
-          onClick={activateSearch}
-        >
-          <span style={{ fontSize: "14px" }}>🔍</span>
-          <span style={{ color: "#777", fontSize: "14px" }}>Search</span>
-        </div>
-      </div>
-
-      {/* Bottom Navigation */}
-      <div
-        style={{
-          display: "flex",
-          justifyContent: "space-around",
-          padding: "15px 0",
-          borderTop: "1px solid #eee",
-          backgroundColor: "#f8f6f2",
-        }}
-      >
-        <div
-          style={{
-            width: "40px",
-            height: "40px",
-            borderRadius: "50%",
-            backgroundColor: "#e0e0e0",
-            display: "flex",
-            alignItems: "center",
-            justifyContent: "center",
-          }}
-        >
-          <span style={{ fontSize: "18px" }}>🏠</span>
-        </div>
-        <div
-          style={{
-            width: "40px",
-            height: "40px",
-            borderRadius: "50%",
-            backgroundColor: "#000",
-            display: "flex",
-            alignItems: "center",
-            justifyContent: "center",
-            cursor: "pointer",
-          }}
-          onClick={activateSearch}
-        >
-          <span style={{ fontSize: "18px", color: "#fff" }}>🔍</span>
-        </div>
-        <div
-          style={{
-            width: "40px",
-            height: "40px",
-            borderRadius: "50%",
-            backgroundColor: "#e0e0e0",
-            display: "flex",
-            alignItems: "center",
-            justifyContent: "center",
-          }}
-        >
-          <span style={{ fontSize: "18px" }}>👤</span>
-        </div>
-      </div>
-    </div>
-  );
-
-  // Render search screen with users list
-  const renderSearchScreen = () => (
-    <div style={containerStyle}>
-      {/* Search bar section */}
-      <div
-        style={{
-          padding: "10px 20px",
-          backgroundColor: "#f8f6f2",
-          borderBottom: "1px solid #eee",
-          position: "sticky",
-          top: 0,
-          zIndex: 10,
-        }}
-      >
-        <div
-          style={{
-            position: "relative",
-            display: "flex",
-            alignItems: "center",
-          }}
-        >
-          <div
-            style={{
-              position: "absolute",
-              left: "12px",
-              color: "#888",
-            }}
+      {/* Search section */}
+      <div className="relative w-full max-w-md px-4">
+        <input
+          type="text"
+          placeholder="Search..."
+          className="w-full py-3 pl-16 pr-10 border border-gray-500 rounded-full bg-transparent focus:outline-none focus:ring-1 focus:ring-gray-500 focus:border-gray-500"
+          value={searchTerm}
+          onChange={handleSearchChange}
+        />
+        <div className="absolute inset-y-0 left-0 flex items-center pl-8 pointer-events-none">
+          <svg
+            className="w-5 h-5"
+            fill="none"
+            stroke="currentColor"
+            viewBox="0 0 24 24"
+            xmlns="http://www.w3.org/2000/svg"
           >
-            🔍
-          </div>
-          <input
-            type="text"
-            placeholder="Search"
-            value={searchTerm}
-            onChange={handleSearchChange}
-            autoFocus
-            style={{
-              width: "100%",
-              padding: "8px 40px 8px 35px",
-              fontSize: "16px",
-              borderRadius: "20px",
-              border: "none",
-              backgroundColor: "#eaeaea",
-            }}
-          />
-          {searchTerm ? (
-            <div
+            <path
+              strokeLinecap="round"
+              strokeLinejoin="round"
+              strokeWidth="2"
+              d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z"
+            ></path>
+          </svg>
+        </div>
+
+        {/* Clear search button */}
+        {searchTerm && (
+          <div className="absolute inset-y-0 right-0 flex items-center pr-8">
+            <button
               onClick={handleClearSearch}
-              style={{
-                position: "absolute",
-                right: "12px",
-                backgroundColor: "#999",
-                color: "#fff",
-                width: "18px",
-                height: "18px",
-                borderRadius: "50%",
-                display: "flex",
-                alignItems: "center",
-                justifyContent: "center",
-                cursor: "pointer",
-                fontSize: "12px",
-              }}
+              className="w-5 h-5 bg-gray-500 rounded-full flex items-center justify-center text-white text-xs"
             >
               ✕
+            </button>
+          </div>
+        )}
+      </div>
+
+      {/* Status message display */}
+      {status && <div className="text-gray-600 mt-2 mb-4">{status}</div>}
+
+      {/* Users list section - only show when user has searched */}
+      {!status && hasSearched && (
+        <div className="w-full max-w-md px-4">
+          {filteredUsers.length === 0 ? (
+            <div className="text-center text-gray-600 mt-4">
+              No users found matching "{searchTerm}"
             </div>
           ) : (
-            <div
-              onClick={deactivateSearch}
-              style={{
-                position: "absolute",
-                right: "12px",
-                color: "#888",
-                fontSize: "16px",
-                cursor: "pointer",
-              }}
-            >
-              ✕
-            </div>
-          )}
-        </div>
-      </div>
-
-      {/* User list section */}
-      <div style={{ flex: 1 }}>
-        {status ? (
-          <p style={{ padding: "0 20px" }}>{status}</p>
-        ) : (
-          <div>
-            {filteredUsers.length === 0 ? (
-              <p
-                style={{ padding: "20px", textAlign: "center", color: "#666" }}
-              >
-                No users found matching "{searchTerm}"
-              </p>
-            ) : (
-              <div style={{ padding: "0 20px" }}>
-                {filteredUsers.map((user) => (
-                  <Link
-                    key={user.id}
-                    to={`/${user.id}`}
-                    style={{
-                      display: "flex",
-                      padding: "12px 0",
-                      textDecoration: "none",
-                      color: "#000",
-                      borderBottom: "1px solid #eee",
-                      alignItems: "center",
-                    }}
-                  >
-                    <div
-                      style={{
-                        width: "50px",
-                        height: "50px",
-                        borderRadius: "50%",
-                        backgroundColor: "#ddd",
-                        marginRight: "15px",
-                        overflow: "hidden",
-                        display: "flex",
-                        alignItems: "center",
-                        justifyContent: "center",
-                      }}
-                    >
-                      {user.profilePicUrl ? (
+            <div className="">
+              {filteredUsers.map((user) => (
+                <Link
+                  key={user.id}
+                  to={`/${getUserRouteParam(user)}`}
+                  className="block p-2 rounded-lg hover:bg-white hover:bg-opacity-20 transition-all duration-200"
+                >
+                  <div className="flex items-center">
+                    <div className="w-12 h-12 rounded-full bg-gray-300 overflow-hidden flex items-center justify-center mr-4">
+                      {user.avatarUrl ? (
                         <img
-                          src={user.profilePicUrl}
-                          alt={user.username}
-                          style={{
-                            width: "100%",
-                            height: "100%",
-                            objectFit: "cover",
-                          }}
+                          src={user.avatarUrl}
+                          alt={user.username || "User"}
+                          className="w-full h-full object-cover"
                         />
                       ) : (
                         <svg
@@ -336,76 +198,22 @@ const UsersList = () => {
                       )}
                     </div>
                     <div>
-                      <div style={{ fontWeight: "bold" }}>
+                      <div className="font-medium">
                         {user.username || "username"}
                       </div>
-                      <div style={{ color: "#666", fontSize: "14px" }}>
+                      <div className="text-gray-600 text-sm">
                         {user.fullName || user.name || user.username}
                       </div>
                     </div>
-                  </Link>
-                ))}
-              </div>
-            )}
-          </div>
-        )}
-      </div>
-
-      {/* Bottom Navigation */}
-      <div
-        style={{
-          display: "flex",
-          justifyContent: "space-around",
-          padding: "15px 0",
-          borderTop: "1px solid #eee",
-          backgroundColor: "#f8f6f2",
-        }}
-      >
-        <div
-          style={{
-            width: "40px",
-            height: "40px",
-            borderRadius: "50%",
-            backgroundColor: "#e0e0e0",
-            display: "flex",
-            alignItems: "center",
-            justifyContent: "center",
-          }}
-        >
-          <span style={{ fontSize: "18px" }}>🏠</span>
+                  </div>
+                </Link>
+              ))}
+            </div>
+          )}
         </div>
-        <div
-          style={{
-            width: "40px",
-            height: "40px",
-            borderRadius: "50%",
-            backgroundColor: "#000",
-            display: "flex",
-            alignItems: "center",
-            justifyContent: "center",
-          }}
-        >
-          <span style={{ fontSize: "18px", color: "#fff" }}>🔍</span>
-        </div>
-        <div
-          style={{
-            width: "40px",
-            height: "40px",
-            borderRadius: "50%",
-            backgroundColor: "#e0e0e0",
-            display: "flex",
-            alignItems: "center",
-            justifyContent: "center",
-          }}
-        >
-          <span style={{ fontSize: "18px" }}>👤</span>
-        </div>
-      </div>
+      )}
     </div>
   );
-
-  // Render the appropriate screen based on state
-  return isSearchActive ? renderSearchScreen() : renderHomeScreen();
 };
 
-export default UsersList;
+export default ArchivePage;

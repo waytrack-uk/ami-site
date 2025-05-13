@@ -10,10 +10,11 @@ import {
   getDoc,
 } from "firebase/firestore";
 import { db } from "../firebase";
+import "./UserProfile.css"; // Import the CSS file
 
 const UserProfile = () => {
-  const { userId } = useParams();
-  const navigate = useNavigate(); // Move this outside of CategoryWidget
+  const { username } = useParams(); // Use username from URL
+  const navigate = useNavigate();
   const [user, setUser] = useState(null);
   const [entries, setEntries] = useState([]);
   const [status, setStatus] = useState("Loading...");
@@ -23,28 +24,57 @@ const UserProfile = () => {
     podcasts: [],
     books: [],
   });
+  // Add state for download button
+  const [showDownloadButton, setShowDownloadButton] = useState(true);
+  // Add state for button text to handle async loading
+  const [buttonText, setButtonText] = useState("Join Archive");
+
+  // Update button text when user data is available
+  useEffect(() => {
+    if (user && user.fullName) {
+      setButtonText(`Join ${user.fullName} on Archive`);
+    } else if (user && user.username) {
+      setButtonText(`Join ${user.username} on Archive`);
+    } else {
+      setButtonText("Join Archive");
+    }
+  }, [user]);
 
   useEffect(() => {
     async function fetchUserAndEntries() {
       try {
-        // Fetch user data
-        const userDoc = await getDoc(doc(db, "users_v3", userId));
+        // Get all users and find a match regardless of case
+        const usersRef = collection(db, "users_v3");
+        const usersSnapshot = await getDocs(usersRef);
 
-        if (!userDoc.exists()) {
+        // Find user with matching username (case-insensitive)
+        let foundUser = null;
+        usersSnapshot.forEach((doc) => {
+          const data = doc.data();
+          // Check all possible username fields and match case-insensitively
+          if (
+            (data.username &&
+              data.username.toLowerCase() === username.toLowerCase()) ||
+            (data.name && data.name.toLowerCase() === username.toLowerCase())
+          ) {
+            foundUser = {
+              id: doc.id,
+              ...data,
+            };
+          }
+        });
+
+        if (!foundUser) {
           setStatus("User not found");
           return;
         }
 
-        const userData = {
-          id: userDoc.id,
-          ...userDoc.data(),
-        };
-        setUser(userData);
+        setUser(foundUser);
 
         // Fetch user's entries
         const entriesQuery = query(
           collection(db, "archives_v3"),
-          where("userId", "==", userId)
+          where("userId", "==", foundUser.id)
         );
 
         const entriesSnapshot = await getDocs(entriesQuery);
@@ -74,7 +104,7 @@ const UserProfile = () => {
             (entry) => entry.category?.toLowerCase() === "music"
           ),
           podcasts: entriesData.filter(
-            (entry) => entry.category?.toLowerCase() === "podcasts"
+            (entry) => entry.category?.toLowerCase() === "podcast"
           ),
           books: entriesData.filter(
             (entry) => entry.category?.toLowerCase() === "books"
@@ -89,18 +119,21 @@ const UserProfile = () => {
       }
     }
 
-    if (userId) {
+    if (username) {
       fetchUserAndEntries();
     }
-  }, [userId]);
+
+    // Ensure download button appears
+    setShowDownloadButton(true);
+  }, [username]);
 
   // Widget component to display a category of entries
-  const CategoryWidget = ({ title, entries, backgroundColor }) => {
-    // Remove useNavigate from here
-
-    // Function to navigate to category page
+  const CategoryWidget = ({ title, entries }) => {
+    // Function to navigate to category page with username
     const handleCategoryClick = () => {
-      navigate(`/category/${title.toLowerCase()}`);
+      navigate(`/category/${title.toLowerCase()}`, {
+        state: { username: user.username },
+      });
     };
 
     // Function to get gradient based on category title
@@ -127,78 +160,31 @@ const UserProfile = () => {
               "linear-gradient(to bottom right, rgba(204, 115, 242, 1), rgba(166, 77, 204, 1), rgba(128, 38, 166, 1))",
           };
         default:
-          return {
-            backgroundColor: backgroundColor,
-          };
+          return {};
       }
     };
 
     return (
       <div
-        className="font-serif"
+        className="category-widget"
         onClick={handleCategoryClick}
-        style={{
-          ...getGradientStyle(title),
-          borderRadius: "16px",
-          padding: "20px",
-          marginBottom: "20px",
-          minHeight: "200px", // Ensures widgets maintain minimum size
-          fontFamily: "Baskerville, serif",
-          cursor: "pointer", // Add cursor pointer for better UX
-          transition: "transform 0.2s ease", // Add transition for hover effect
-        }}
-        onMouseOver={(e) => {
-          e.currentTarget.style.transform = "scale(1.02)";
-        }}
-        onMouseOut={(e) => {
-          e.currentTarget.style.transform = "scale(1)";
-        }}
+        style={getGradientStyle(title)}
       >
-        <h2
-          className="font-serif font-bold"
-          style={{
-            color: "white",
-            fontSize: "28px",
-            marginBottom: "15px",
-            fontFamily: "Baskerville, serif",
-          }}
-        >
-          {title}
-        </h2>
-        <div
-          style={{
-            display: "grid",
-            gridTemplateColumns: "repeat(auto-fill, minmax(80px, 1fr))", // Reduced from 100px to 80px
-            gap: "10px",
-            minHeight: "120px", // Ensures content area has minimum height
-          }}
-        >
-          {entries.length > 0 ? (
-            entries.map((entry) => (
-              <div key={entry.id}>
-                {entry.thumbnailUrl && (
-                  <img
-                    src={entry.thumbnailUrl}
-                    alt={entry.title}
-                    style={{
-                      width: "100%",
-                      aspectRatio: "2/3",
-                      objectFit: "cover",
-                      borderRadius: "8px",
-                      maxHeight: "120px", // Limit the height of thumbnails
-                    }}
-                  />
-                )}
-              </div>
-            ))
-          ) : (
-            <p
-              className="text-white col-span-full font-serif"
-              style={{ fontFamily: "Baskerville, serif" }}
-            >
-              No {title.toLowerCase()} entries yet
-            </p>
-          )}
+        <h2 className="category-title">{title}</h2>
+        <div className="image-grid">
+          {entries.length > 0
+            ? entries.map((entry) => (
+                <div key={entry.id}>
+                  {entry.thumbnailUrl && (
+                    <img
+                      src={entry.thumbnailUrl}
+                      alt={entry.title}
+                      className="entry-image"
+                    />
+                  )}
+                </div>
+              ))
+            : null}
         </div>
       </div>
     );
@@ -206,71 +192,65 @@ const UserProfile = () => {
 
   return (
     <div
-      className="font-serif"
+      className="profile-container"
       style={{
         margin: "0 auto",
         maxWidth: "800px",
         padding: "20px",
-        fontFamily: "Baskerville, serif",
-        position: "relative", // Added for logo positioning
+        paddingBottom: "80px",
       }}
     >
-      {/* Logo in top right corner */}
-      <div
-        style={{
-          position: "absolute",
-          top: "20px",
-          right: "20px",
-          zIndex: "10",
-        }}
-      >
-        <img
-          src="/logo.png"
-          alt="Archive Logo"
-          style={{
-            height: "40px",
-            width: "auto",
-          }}
-        />
-      </div>
-
       {status ? (
-        <p className="font-serif" style={{ fontFamily: "Baskerville, serif" }}>
-          {status}
-        </p>
+        <p>{status}</p>
       ) : (
         <>
           {user && (
             <>
+              {/* Mobile-friendly flexbox layout with controllable gap */}
               <div
                 style={{
                   display: "flex",
                   alignItems: "center",
-                  marginBottom: "20px",
+                  gap: "20px" /* ADJUST THIS VALUE to control spacing between avatar and username */,
+                  marginBottom: "30px",
+                  width: "100%",
                 }}
               >
-                {user.userAvatarUrl && (
+                {/* Avatar */}
+                <div style={{ flexShrink: 0 }}>
                   <img
-                    src={user.userAvatarUrl}
+                    src={user.avatarUrl || "https://via.placeholder.com/60"}
                     alt={`${user.username}'s avatar`}
                     style={{
-                      width: "60px",
-                      height: "60px",
+                      width: "80px",
+                      height: "80px",
                       borderRadius: "50%",
-                      marginRight: "15px",
+                      objectFit: "cover",
                     }}
                   />
-                )}
-                <h1
-                  className="font-serif font-bold"
+                </div>
+
+                {/* Username with font styling */}
+                <div
                   style={{
-                    fontSize: "32px",
-                    margin: 0,
-                    fontFamily: "Baskerville, serif",
+                    flexGrow: 0,
+                    maxWidth: "fit-content",
                   }}
                 >
-                  {user.username}
-                </h1>
+                  <h1
+                    style={{
+                      fontSize: "32px",
+                      margin: "0",
+                      fontFamily: "'Libre Baskerville', serif",
+                      fontWeight: 700,
+                      letterSpacing: "0.02em",
+                      whiteSpace:
+                        "nowrap" /* Prevents username from wrapping */,
+                    }}
+                  >
+                    {user.username}
+                  </h1>
+                </div>
               </div>
 
               <div style={{ marginTop: "30px" }}>
@@ -291,6 +271,50 @@ const UserProfile = () => {
             </>
           )}
         </>
+      )}
+
+      {/* Transparent footer with just the download button */}
+      {showDownloadButton && (
+        <div
+          id="download-footer"
+          style={{
+            position: "fixed",
+            bottom: 70,
+            left: 0,
+            width: "100%",
+            padding: "15px 0",
+            textAlign: "center",
+            zIndex: 1000,
+            backgroundColor: "transparent",
+          }}
+        >
+          <a
+            href="https://apps.apple.com/gb/app/archive-be-curious/id6738609084"
+            target="_blank"
+            rel="noopener noreferrer"
+            style={{
+              textDecoration: "none", // Remove underline from link
+              display: "inline-block", // Make the link behave like a block
+            }}
+          >
+            <button
+              style={{
+                backgroundColor: "#111",
+                color: "white",
+                border: "none",
+                borderRadius: "25px",
+                padding: "12px 30px",
+                fontSize: "20px",
+                fontFamily: "'Libre Baskerville', serif",
+                cursor: "pointer",
+                boxShadow: "0 2px 8px rgba(0,0,0,0.3)",
+                display: "inline-block",
+              }}
+            >
+              {buttonText}
+            </button>
+          </a>
+        </div>
       )}
     </div>
   );
