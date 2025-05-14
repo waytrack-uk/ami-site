@@ -128,7 +128,7 @@ const UserProfile = () => {
   }, [username]);
 
   // Widget component to display a category of entries
-  const CategoryWidget = ({ title, entries }) => {
+  const CategoryWidget = ({ title, entries, compact = false }) => {
     // Function to navigate to category page with username
     const handleCategoryClick = () => {
       navigate(`/category/${title.toLowerCase()}`, {
@@ -164,22 +164,78 @@ const UserProfile = () => {
       }
     };
 
+    // Determine if this is a square grid (Music/Podcasts) or horizontal layout (TV/Books)
+    const isSquareGrid = compact;
+
+    // Set consistent heights for all widgets
+    const widgetStyle = {
+      ...getGradientStyle(title),
+      borderRadius: "16px",
+      padding: "15px",
+      marginBottom: "20px",
+      height: "180px",
+      cursor: "pointer",
+      transition: "transform 0.2s ease",
+      display: "flex",
+      flexDirection: "column",
+    };
+
+    // Create appropriate grid style based on widget type
+    const gridStyle = {
+      display: "grid",
+      gridTemplateColumns: isSquareGrid
+        ? "repeat(2, 1fr)" // 2x2 grid for Music/Podcasts
+        : "repeat(4, 1fr)", // 4 horizontal items for TV/Books
+      gridTemplateRows: isSquareGrid ? "repeat(2, 1fr)" : "1fr",
+      gap: isSquareGrid ? "8px" : "10px", // Smaller gap for square grid
+      flex: "1",
+      overflow: "hidden",
+    };
+
+    // Limit entries to display
+    const displayLimit = 4; // Show 4 items for all widgets
+
     return (
       <div
         className="category-widget"
         onClick={handleCategoryClick}
-        style={getGradientStyle(title)}
+        style={widgetStyle}
       >
-        <h2 className="category-title">{title}</h2>
-        <div className="image-grid">
+        <h2
+          className="category-title"
+          style={{
+            fontSize: "24px",
+            marginBottom: "6px", // Further reduced from 8px to 6px
+            marginTop: "0",
+          }}
+        >
+          {title}
+        </h2>
+        <div className="image-grid" style={gridStyle}>
           {entries.length > 0
-            ? entries.map((entry) => (
-                <div key={entry.id}>
+            ? entries.slice(0, displayLimit).map((entry) => (
+                <div
+                  key={entry.id}
+                  style={{
+                    width: "100%",
+                    height: "100%",
+                    display: "flex",
+                    justifyContent: "center",
+                    alignItems: "center",
+                  }}
+                >
                   {entry.thumbnailUrl && (
                     <img
                       src={entry.thumbnailUrl}
                       alt={entry.title}
                       className="entry-image"
+                      style={{
+                        width: isSquareGrid ? "55px" : "100%", // Fixed width for squares
+                        height: isSquareGrid ? "55px" : "90px", // Reduced from 65px to 55px for squares
+                        aspectRatio: isSquareGrid ? "1/1" : "2/3",
+                        objectFit: "cover",
+                        borderRadius: "8px",
+                      }}
                     />
                   )}
                 </div>
@@ -256,15 +312,37 @@ const UserProfile = () => {
               </div>
 
               <div style={{ marginTop: "30px" }}>
+                {/* TV at top - full width */}
                 <CategoryWidget title="TV" entries={categorizedEntries.tv} />
-                <CategoryWidget
-                  title="Music"
-                  entries={categorizedEntries.music}
-                />
-                <CategoryWidget
-                  title="Podcasts"
-                  entries={categorizedEntries.podcasts}
-                />
+
+                {/* Music and Podcasts side by side */}
+                <div
+                  style={{
+                    display: "flex",
+                    gap: "15px",
+                    marginBottom: "0", // Remove extra margin since widgets have their own
+                  }}
+                >
+                  {/* Music on left - half width */}
+                  <div style={{ flex: "1" }}>
+                    <CategoryWidget
+                      title="Music"
+                      entries={categorizedEntries.music}
+                      compact={true}
+                    />
+                  </div>
+
+                  {/* Podcasts on right - half width */}
+                  <div style={{ flex: "1" }}>
+                    <CategoryWidget
+                      title="Podcasts"
+                      entries={categorizedEntries.podcasts}
+                      compact={true}
+                    />
+                  </div>
+                </div>
+
+                {/* Books at bottom - full width */}
                 <CategoryWidget
                   title="Books"
                   entries={categorizedEntries.books}
@@ -280,7 +358,7 @@ const UserProfile = () => {
           id="download-footer"
           style={{
             position: "fixed",
-            bottom: 30,
+            bottom: 12,
             left: 0,
             width: "100%",
             padding: "15px 0",

@@ -107,15 +107,16 @@
   object-fit: cover;
 }
 
-/* Add these styles to your UserProfile.css file */
-html,
+/* Replace your current html, body CSS with this */
+html {
+  background-color: #f2e8d5;
+}
+
 body {
-  min-height: 100%;
-  height: 100%;
+  background-color: #f2e8d5;
   margin: 0;
   padding: 0;
-  background-color: #f2e8d5;
-  overscroll-behavior: none;
+  /* Remove the overscroll-behavior: none to allow natural bouncing */
 }
 
 #root {
