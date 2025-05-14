@@ -273,13 +273,12 @@ const UserProfile = () => {
         </>
       )}
 
-      {/* Transparent footer with just the download button */}
       {showDownloadButton && (
         <div
           id="download-footer"
           style={{
             position: "fixed",
-            bottom: 70,
+            bottom: 30,
             left: 0,
             width: "100%",
             padding: "15px 0",
@@ -293,24 +292,34 @@ const UserProfile = () => {
             target="_blank"
             rel="noopener noreferrer"
             style={{
-              textDecoration: "none", // Remove underline from link
-              display: "inline-block", // Make the link behave like a block
+              textDecoration: "none",
+              display: "inline-block",
             }}
           >
             <button
+              className="download-button" // Add this class to use our CSS
               style={{
-                backgroundColor: "#111",
-                color: "white",
+                backgroundColor: "white",
+                color: "#111",
                 border: "none",
                 borderRadius: "25px",
                 padding: "12px 30px",
-                fontSize: "20px",
-                fontFamily: "'Libre Baskerville', serif",
+                fontSize: "25px",
                 cursor: "pointer",
-                boxShadow: "0 2px 8px rgba(0,0,0,0.3)",
-                display: "inline-block",
+                boxShadow: "0 4px 20px rgba(0,0,0,0.25)",
+                display: "flex",
+                alignItems: "center",
+                justifyContent: "center",
+                gap: "8px",
               }}
             >
+              <img
+                src="/apple-logo.svg"
+                alt="Apple logo"
+                style={{
+                  height: "22px",
+                }}
+              />
               {buttonText}
             </button>
           </a>
