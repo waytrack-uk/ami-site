@@ -2,9 +2,25 @@
 @tailwind components;
 @tailwind utilities;
 
-/* Set the page background color globally */
+/* Fix for iOS overscroll black areas */
+html,
 body {
-  @apply bg-page-bg;
+  background-color: #f2e8d5;
+  overscroll-behavior-y: none;
+  overflow: hidden;
+  position: fixed;
+  width: 100%;
+  height: 100%;
+}
+
+#root {
+  background-color: #f2e8d5;
+  overflow-y: auto;
+  width: 100%;
+  height: 100%;
+  -webkit-overflow-scrolling: touch;
+  padding-top: env(safe-area-inset-top);
+  padding-bottom: env(safe-area-inset-bottom);
 }
 
 /* You may need to import Baskerville font if it's not available on the user's system */

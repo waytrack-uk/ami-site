@@ -10,7 +10,7 @@ function App() {
       <Routes>
         <Route path="/" element={<UsersList />} />
         <Route path="/:username" element={<UserProfile />} />
-        <Route path="/category/:categoryName" element={<CategoryPage />} />
+        <Route path="/:username/:categoryName" element={<CategoryPage />} />
       </Routes>
     </BrowserRouter>
   );

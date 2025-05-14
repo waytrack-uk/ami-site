@@ -1,15 +1,17 @@
 // src/components/CategoryPage.jsx
 import React, { useEffect, useState } from "react";
-import { useParams, Link, useLocation } from "react-router-dom";
+import { useParams, Link, useLocation, useNavigate } from "react-router-dom";
 import { collection, getDocs, query, where } from "firebase/firestore";
 import { db } from "../firebase";
 
 const CategoryPage = () => {
-  const { categoryName } = useParams();
+  const { categoryName, username } = useParams();
+  const navigate = useNavigate();
   const location = useLocation();
   const [entries, setEntries] = useState([]);
   const [loading, setLoading] = useState(true);
   const [userId, setUserId] = useState(null);
+  const [userData, setUserData] = useState(null);
 
   // Function to get gradient based on category name
   const getGradientStyle = (category) => {
@@ -29,11 +31,17 @@ const CategoryPage = () => {
 
   // Function to normalize category name for database queries
   const normalizeCategoryName = (category) => {
-    // Convert category name to singular form for database queries when needed
-    if (category.toLowerCase() === "podcasts") {
+    // Convert plural to singular for database queries
+    const lowerCategory = category.toLowerCase();
+    if (lowerCategory === "books") {
+      return "book";
+    } else if (lowerCategory === "podcasts") {
       return "podcast";
+    } else if (lowerCategory === "tv" || lowerCategory === "music") {
+      // These stay the same
+      return lowerCategory;
     }
-    return category.toLowerCase();
+    return lowerCategory; // Return as-is for any other categories
   };
 
   // Extract userId from URL state or query parameters
@@ -50,6 +58,216 @@ const CategoryPage = () => {
       }
     }
   }, [location]);
+
+  // Fetch user data based on username
+  useEffect(() => {
+    async function fetchUserData() {
+      if (!username) return;
+
+      try {
+        // Get all users and find a match regardless of case
+        const usersRef = collection(db, "users_v3");
+        const usersSnapshot = await getDocs(usersRef);
+
+        // Find user with matching username (case-insensitive)
+        let foundUser = null;
+        usersSnapshot.forEach((doc) => {
+          const data = doc.data();
+          // Check username match case-insensitively
+          if (
+            (data.username &&
+              data.username.toLowerCase() === username.toLowerCase()) ||
+            (data.name && data.name.toLowerCase() === username.toLowerCase())
+          ) {
+            foundUser = {
+              id: doc.id,
+              ...data,
+            };
+            setUserId(doc.id); // Set userId here to avoid duplicate fetches
+          }
+        });
+
+        if (foundUser) {
+          setUserData(foundUser);
+        } else {
+          console.error("User not found for username:", username);
+        }
+      } catch (error) {
+        console.error("Error fetching user:", error);
+      }
+    }
+
+    fetchUserData();
+  }, [username]);
+
+  // Fetch entries for this category
+  useEffect(() => {
+    async function fetchCategoryEntries() {
+      try {
+        setLoading(true);
+
+        // Normalize the category name for database query
+        const normalizedCategoryName = normalizeCategoryName(categoryName);
+        console.log(
+          `Using normalized category name: ${normalizedCategoryName}`
+        );
+
+        // Use a simpler approach - get all entries and filter client-side
+        let entriesQuery;
+
+        if (userId) {
+          // Just filter by category and userId
+          entriesQuery = query(
+            collection(db, "archives_v3"),
+            where("category", "==", normalizedCategoryName),
+            where("userId", "==", userId)
+          );
+          console.log(
+            `Fetching all entries for category: ${normalizedCategoryName} and userId: ${userId}`
+          );
+        } else {
+          // Just filter by category
+          entriesQuery = query(
+            collection(db, "archives_v3"),
+            where("category", "==", normalizedCategoryName)
+          );
+        }
+
+        const entriesSnapshot = await getDocs(entriesQuery);
+        console.log(`Query returned ${entriesSnapshot.size} documents`);
+
+        if (entriesSnapshot.empty) {
+          setEntries([]);
+          setLoading(false);
+          return;
+        }
+
+        const entriesData = [];
+        entriesSnapshot.forEach((doc) => {
+          const data = doc.data();
+          // Debug logging
+          console.log(
+            `Entry: ${doc.id}, Status: ${data.status}, Title: ${data.title}`
+          );
+
+          // Include if it's completed OR has no status
+          if (
+            data.status === "completed" ||
+            !data.status ||
+            data.status === "" ||
+            data.status === null
+          ) {
+            entriesData.push({
+              id: doc.id,
+              ...data,
+            });
+          }
+        });
+
+        console.log(`After filtering, we have ${entriesData.length} entries`);
+
+        // Sort entries by date (newest first)
+        entriesData.sort((a, b) => {
+          // First try to use updatedAt, then fallback to createdAt
+          let dateA, dateB;
+
+          // Try to get dateA
+          if (a.updatedAt) {
+            dateA = a.updatedAt.toDate
+              ? a.updatedAt.toDate()
+              : new Date(a.updatedAt);
+          } else if (a.createdAt) {
+            dateA = a.createdAt.toDate
+              ? a.createdAt.toDate()
+              : new Date(a.createdAt);
+          } else {
+            dateA = new Date(0);
+          }
+
+          // Try to get dateB
+          if (b.updatedAt) {
+            dateB = b.updatedAt.toDate
+              ? b.updatedAt.toDate()
+              : new Date(b.updatedAt);
+          } else if (b.createdAt) {
+            dateB = b.createdAt.toDate
+              ? b.createdAt.toDate()
+              : new Date(b.createdAt);
+          } else {
+            dateB = new Date(0);
+          }
+
+          return dateB - dateA;
+        });
+
+        setEntries(entriesData);
+        setLoading(false);
+      } catch (error) {
+        console.error("Error fetching entries:", error);
+        setLoading(false);
+      }
+    }
+
+    fetchCategoryEntries();
+  }, [categoryName, userId]);
+
+  // Apply gradient to the entire body when component mounts
+  useEffect(() => {
+    // Get the gradient for this category
+    const gradientBackground = getGradientStyle(categoryName);
+
+    // Force all relevant elements to use our gradient
+    document.documentElement.style.backgroundColor = "transparent";
+    document.documentElement.style.background = gradientBackground;
+
+    document.body.style.backgroundColor = "transparent";
+    document.body.style.background = gradientBackground;
+    document.body.style.backgroundAttachment = "fixed";
+
+    // Find and remove any beige background that might be persisting
+    const allElements = document.querySelectorAll("*");
+    allElements.forEach((el) => {
+      const style = window.getComputedStyle(el);
+      if (
+        style.backgroundColor === "rgb(242, 232, 213)" ||
+        style.backgroundColor === "#f2e8d5"
+      ) {
+        el.style.backgroundColor = "transparent";
+      }
+    });
+
+    // Add some debugging to identify potential conflicts
+    console.log("Applied gradient:", gradientBackground);
+    console.log(
+      "Current documentElement background:",
+      window.getComputedStyle(document.documentElement).background
+    );
+    console.log(
+      "Current body background:",
+      window.getComputedStyle(document.body).background
+    );
+
+    // Add !important to make sure our styles take precedence
+    const styleEl = document.createElement("style");
+    styleEl.innerHTML = `
+      html, body {
+        background: ${gradientBackground} !important;
+        background-attachment: fixed !important;
+      }
+    `;
+    document.head.appendChild(styleEl);
+
+    // Cleanup function
+    return () => {
+      document.documentElement.style.background = "";
+      document.documentElement.style.backgroundColor = "";
+      document.body.style.background = "";
+      document.body.style.backgroundColor = "";
+      if (styleEl.parentNode) {
+        document.head.removeChild(styleEl);
+      }
+    };
+  }, [categoryName]);
 
   // Group entries by month
   const groupEntriesByMonth = (entries) => {
@@ -77,108 +295,13 @@ const CategoryPage = () => {
     return grouped;
   };
 
-  // Fetch entries for this category
-  useEffect(() => {
-    async function fetchCategoryEntries() {
-      try {
-        setLoading(true);
-
-        // Normalize the category name for database query
-        const normalizedCategoryName = normalizeCategoryName(categoryName);
-
-        let entriesQuery;
-
-        if (userId) {
-          // If we have a userId, filter by both category and userId
-          entriesQuery = query(
-            collection(db, "archives_v3"),
-            where("category", "==", normalizedCategoryName),
-            where("userId", "==", userId)
-          );
-          console.log(
-            `Fetching entries for category: ${normalizedCategoryName} and userId: ${userId}`
-          );
-        } else {
-          // If no userId is available, just filter by category
-          // This is a fallback but might show entries from all users
-          console.warn(
-            "No userId available, fetching entries for category only"
-          );
-          entriesQuery = query(
-            collection(db, "archives_v3"),
-            where("category", "==", normalizedCategoryName)
-          );
-        }
-
-        const entriesSnapshot = await getDocs(entriesQuery);
-
-        if (entriesSnapshot.empty) {
-          setEntries([]);
-          setLoading(false);
-          return;
-        }
-
-        const entriesData = [];
-        entriesSnapshot.forEach((doc) => {
-          entriesData.push({
-            id: doc.id,
-            ...doc.data(),
-          });
-        });
-
-        // Sort entries by date (newest first)
-        entriesData.sort((a, b) => {
-          const dateA = a.createdAt
-            ? a.createdAt.toDate
-              ? a.createdAt.toDate()
-              : new Date(a.createdAt)
-            : new Date(0);
-          const dateB = b.createdAt
-            ? b.createdAt.toDate
-              ? b.createdAt.toDate()
-              : new Date(b.createdAt)
-            : new Date(0);
-          return dateB - dateA;
-        });
-
-        setEntries(entriesData);
-        setLoading(false);
-      } catch (error) {
-        console.error("Error fetching entries:", error);
-        setLoading(false);
-      }
-    }
-
-    fetchCategoryEntries();
-  }, [categoryName, userId]);
-
-  // Apply gradient to the entire body when component mounts
-  useEffect(() => {
-    // Store the original background
-    const originalBackground = document.body.style.background;
-    const originalOverflow = document.body.style.overflow;
-
-    // Apply new styles to body
-    document.body.style.background = getGradientStyle(categoryName);
-    document.body.style.backgroundAttachment = "fixed"; // Keeps the background fixed during scroll
-    document.body.style.margin = "0";
-    document.body.style.padding = "0";
-    document.body.style.minHeight = "100vh";
-
-    // Cleanup function to restore original background when component unmounts
-    return () => {
-      document.body.style.background = originalBackground;
-      document.body.style.overflow = originalOverflow;
-    };
-  }, [categoryName]);
-
   // Group entries by month
   const groupedEntries = groupEntriesByMonth(entries);
 
   // Function to format the rating (ensure it has one decimal place)
   const formatRating = (rating) => {
     if (rating === undefined || rating === null) {
-      return "0.0"; // Default if no rating
+      return null; // Return null if no rating so we don't display it
     }
 
     // Convert to number if it's a string
@@ -205,133 +328,422 @@ const CategoryPage = () => {
     }
   };
 
+  // Function to format the category name for display
+  const formatCategoryName = (name) => {
+    // Handle specific categories differently if needed
+    if (name.toLowerCase() === "tv") {
+      return "TV"; // All uppercase for TV
+    }
+    // Capitalize first letter for other categories
+    return name.charAt(0).toUpperCase() + name.toLowerCase().slice(1);
+  };
+
+  // Get possessive form of name
+  const getPossessiveName = (name) => {
+    if (!name) return "";
+    return name + (name.endsWith("s") ? "'" : "'s");
+  };
+
+  // Get the appropriate verb for completed items based on category
+  const getCompletedVerbForCategory = (category) => {
+    switch (category.toLowerCase()) {
+      case "tv":
+        return "Watched";
+      case "books":
+        return "Read";
+      case "podcasts":
+        return "Listened";
+      case "music":
+        return "Listened";
+      default:
+        return "Completed";
+    }
+  };
+
+  // Get favorites entries (entries with rating of 5)
+  const favoriteEntries = entries.filter((entry) => {
+    const rating =
+      typeof entry.rating === "string"
+        ? parseFloat(entry.rating)
+        : entry.rating;
+    return rating === 5;
+  });
+
+  // Check if we have any favorites to display
+  const hasFavorites = favoriteEntries.length > 0;
+
   return (
     <div
       className="font-serif"
       style={{
         margin: "0 auto",
-        maxWidth: "800px",
-        padding: "20px 15px",
-        fontFamily: "Baskerville, serif",
+        maxWidth: "100%",
+        padding: "0",
         color: "white",
         minHeight: "100vh",
+        background: "transparent",
+        position: "relative",
       }}
     >
-      {/* Back button */}
-      <div style={{ marginBottom: "25px" }}>
+      {/* Back button - top left as in screenshot */}
+      <div
+        style={{
+          position: "absolute",
+          top: "16px",
+          left: "15px",
+          zIndex: "2",
+        }}
+      >
         <Link
-          to={userId ? `/${userId}` : "/"}
+          to={username ? `/${username}` : "/"}
           style={{
             color: "white",
             textDecoration: "none",
-            fontSize: "24px",
+            display: "block",
+            padding: "10px",
           }}
         >
-          ←
+          <svg
+            width="12"
+            height="21"
+            viewBox="0 0 12 21"
+            fill="none"
+            xmlns="http://www.w3.org/2000/svg"
+          >
+            <path
+              d="M10 2L2 10.5L10 19"
+              stroke="white"
+              strokeWidth="3"
+              strokeLinecap="round"
+              strokeLinejoin="round"
+            />
+          </svg>
         </Link>
       </div>
 
-      {loading ? (
-        <p>Loading {categoryName} entries...</p>
-      ) : entries.length === 0 ? (
-        <p>No {categoryName} entries found.</p>
-      ) : (
-        <div>
-          {Object.keys(groupedEntries).map((monthYear) => (
-            <div key={monthYear} style={{ marginBottom: "40px" }}>
-              <div style={{ marginBottom: "15px" }}>
+      {/* Main content area with proper padding */}
+      <div
+        style={{
+          paddingTop: "50px",
+          paddingLeft: "20px",
+          paddingRight: "20px",
+        }}
+      >
+        {/* Category title - smaller as per screenshot */}
+        <h1
+          style={{
+            fontSize: "36px",
+            fontWeight: "bold",
+            fontFamily: "Baskerville, serif",
+            color: "white",
+            margin: "10px 0 20px 0",
+          }}
+        >
+          {formatCategoryName(categoryName)}
+        </h1>
+
+        {loading ? (
+          <p>Loading {categoryName} entries...</p>
+        ) : entries.length === 0 ? (
+          <p>No {categoryName} entries found.</p>
+        ) : (
+          <div>
+            {/* Favorites Section - Only show if there are 5-star ratings */}
+            {hasFavorites && (
+              <div style={{ marginBottom: "30px" }}>
                 <h2
                   style={{
                     fontSize: "28px",
-                    margin: "0 0 5px 0",
-                    fontFamily: "Baskerville, serif",
                     fontWeight: "bold",
+                    fontFamily: "Baskerville, serif",
+                    color: "white",
+                    margin: "20px 0 5px 0",
                   }}
                 >
-                  {getCategoryDisplayText(categoryName, monthYear)}
+                  Favourites
                 </h2>
-              </div>
 
-              {groupedEntries[monthYear].map((entry) => (
+                <p
+                  style={{
+                    fontSize: "14px",
+                    opacity: "0.8",
+                    color: "white",
+                    fontFamily:
+                      "-apple-system, BlinkMacSystemFont, 'SF Pro Text', 'Segoe UI', Roboto, Helvetica, Arial, sans-serif",
+                    margin: "0 0 15px 0",
+                  }}
+                >
+                  Archives with a 5-star rating
+                </p>
+
+                {/* Horizontal scrolling gallery */}
                 <div
-                  key={entry.id}
                   style={{
                     display: "flex",
-                    alignItems: "center",
-                    marginBottom: "20px",
-                    position: "relative",
+                    overflowX: "auto",
+                    gap: "15px",
+                    padding: "5px 0 15px 0",
+                    scrollbarWidth: "none", // Firefox
+                    msOverflowStyle: "none", // IE and Edge
                   }}
+                  className="hide-scrollbar"
                 >
-                  {/* Thumbnail/Cover */}
-                  <div style={{ marginRight: "15px", flexShrink: 0 }}>
-                    {entry.thumbnailUrl ? (
-                      <img
-                        src={entry.thumbnailUrl}
-                        alt={entry.title || "Entry thumbnail"}
-                        style={{
-                          width: "75px",
-                          height: "75px",
-                          objectFit: "cover",
-                          borderRadius: "4px",
-                        }}
-                      />
-                    ) : (
+                  {favoriteEntries.map((entry) => (
+                    <div
+                      key={`favorite-gallery-${entry.id}`}
+                      style={{
+                        position: "relative",
+                        minWidth: "160px",
+                        height: "220px",
+                        borderRadius: "8px",
+                        overflow: "hidden",
+                        flexShrink: 0,
+                      }}
+                    >
+                      {/* Background image */}
                       <div
                         style={{
-                          width: "75px",
-                          height: "75px",
-                          backgroundColor: "rgba(255, 255, 255, 0.2)",
-                          borderRadius: "4px",
+                          position: "absolute",
+                          width: "100%",
+                          height: "100%",
+                          backgroundImage: entry.thumbnailUrl
+                            ? `url(${entry.thumbnailUrl})`
+                            : "none",
+                          backgroundSize: "cover",
+                          backgroundPosition: "center",
+                          backgroundColor: entry.thumbnailUrl
+                            ? "transparent"
+                            : "rgba(255, 255, 255, 0.2)",
+                        }}
+                      />
+
+                      {/* Gradient overlay for text visibility - reduced to bottom 1/3 */}
+                      <div
+                        style={{
+                          position: "absolute",
+                          bottom: 0,
+                          left: 0,
+                          right: 0,
+                          height: "33%", // Reduced to 1/3 of the image
+                          background:
+                            "linear-gradient(to top, rgba(0,0,0,0.8) 0%, rgba(0,0,0,0.4) 80%, rgba(0,0,0,0) 100%)",
+                          zIndex: 1,
+                        }}
+                      />
+
+                      {/* Text overlay - positioned at bottom 1/3 */}
+                      <div
+                        style={{
+                          position: "absolute",
+                          bottom: 0,
+                          left: 0,
+                          right: 0,
+                          padding: "10px", // Further reduced padding
+                          zIndex: 2,
+                        }}
+                      >
+                        <h4
+                          style={{
+                            fontSize: "14px", // Smaller title font size
+                            margin: "0 0 1px 0", // Less space between title and creator
+                            fontFamily:
+                              "-apple-system, BlinkMacSystemFont, 'SF Pro Text', 'Segoe UI', Roboto, Helvetica, Arial, sans-serif",
+                            fontWeight: "500",
+                            color: "white",
+                            textShadow: "0px 1px 2px rgba(0,0,0,0.5)",
+                            lineHeight: "1.2", // Tighter line height
+                          }}
+                        >
+                          {entry.title || "Untitled Entry"}
+                        </h4>
+
+                        <p
+                          style={{
+                            fontSize: "12px", // Smaller creator font
+                            margin: "0",
+                            fontFamily:
+                              "-apple-system, BlinkMacSystemFont, 'SF Pro Text', 'Segoe UI', Roboto, Helvetica, Arial, sans-serif",
+                            color: "white",
+                            opacity: "0.9",
+                            textShadow: "0px 1px 2px rgba(0,0,0,0.5)",
+                            lineHeight: "1.2", // Tighter line height
+                          }}
+                        >
+                          {entry.creator || "Unknown Creator"}
+                        </p>
+                      </div>
+                    </div>
+                  ))}
+                </div>
+              </div>
+            )}
+
+            {/* "Watched" or equivalent section title */}
+            <h2
+              style={{
+                fontSize: "28px",
+                fontWeight: "bold",
+                fontFamily: "Baskerville, serif",
+                color: "white",
+                margin: "20px 0 10px 0",
+              }}
+            >
+              {getCompletedVerbForCategory(categoryName)}
+            </h2>
+
+            {/* Chronological entries by month */}
+            {Object.keys(groupedEntries).map((monthYear) => (
+              <div key={monthYear} style={{ marginBottom: "30px" }}>
+                {/* Month heading - smaller */}
+                <h3
+                  style={{
+                    fontSize: "22px", // Reduced size
+                    color: "rgba(255, 255, 255, 0.8)",
+                    marginBottom: "15px", // Reduced margin
+                    fontFamily: "Baskerville, serif", // Keep month in Baskerville
+                    fontWeight: "normal",
+                  }}
+                >
+                  {monthYear}
+                </h3>
+
+                {/* Entries list with divider lines */}
+                <div>
+                  {groupedEntries[monthYear].map((entry, index) => (
+                    <div key={entry.id}>
+                      <div
+                        style={{
                           display: "flex",
                           alignItems: "center",
-                          justifyContent: "center",
+                          paddingTop: "12px",
+                          paddingBottom: "12px",
+                          position: "relative",
                         }}
                       >
-                        <span style={{ fontSize: "24px" }}>?</span>
+                        {/* Thumbnail/Cover - smaller */}
+                        <div style={{ marginRight: "15px", flexShrink: 0 }}>
+                          {entry.thumbnailUrl ? (
+                            <img
+                              src={entry.thumbnailUrl}
+                              alt={entry.title || "Entry thumbnail"}
+                              style={{
+                                width: "60px", // Smaller
+                                height: "60px", // Smaller
+                                objectFit: "cover",
+                                borderRadius: "4px",
+                              }}
+                            />
+                          ) : (
+                            <div
+                              style={{
+                                width: "60px", // Smaller
+                                height: "60px", // Smaller
+                                backgroundColor: "rgba(255, 255, 255, 0.2)",
+                                borderRadius: "4px",
+                                display: "flex",
+                                alignItems: "center",
+                                justifyContent: "center",
+                              }}
+                            >
+                              <span style={{ fontSize: "20px" }}>?</span>
+                            </div>
+                          )}
+                        </div>
+
+                        {/* Entry Details - Title and Creator in SF Pro */}
+                        <div style={{ flex: "1" }}>
+                          <h4
+                            style={{
+                              fontSize: "17px", // Smaller
+                              margin: "0 0 3px 0",
+                              fontFamily:
+                                "-apple-system, BlinkMacSystemFont, 'SF Pro Text', 'Segoe UI', Roboto, Helvetica, Arial, sans-serif", // SF Pro
+                              fontWeight: "normal",
+                            }}
+                          >
+                            {entry.title || "Untitled Entry"}
+                          </h4>
+
+                          <p
+                            style={{
+                              fontSize: "15px", // Smaller
+                              margin: "0",
+                              opacity: "0.7", // More transparent
+                              fontFamily:
+                                "-apple-system, BlinkMacSystemFont, 'SF Pro Text', 'Segoe UI', Roboto, Helvetica, Arial, sans-serif", // SF Pro
+                              display: "flex",
+                              alignItems: "center",
+                            }}
+                          >
+                            {entry.creator || "Unknown Creator"}
+                          </p>
+                        </div>
+
+                        {/* Rating with star - right aligned */}
+                        <div
+                          style={{
+                            marginLeft: "auto",
+                            display: "flex",
+                            alignItems: "center",
+                            gap: "2px",
+                          }}
+                        >
+                          {formatRating(entry.rating) && (
+                            <span
+                              style={{
+                                fontSize: "15px", // Smaller
+                                opacity: "0.8",
+                                color: "white",
+                                fontFamily:
+                                  "-apple-system, BlinkMacSystemFont, 'SF Pro Text', 'Segoe UI', Roboto, Helvetica, Arial, sans-serif", // SF Pro
+                                display: "flex",
+                                alignItems: "center",
+                              }}
+                            >
+                              <span
+                                style={{
+                                  marginRight: "4px",
+                                  fontSize: "14px", // Smaller star
+                                }}
+                              >
+                                ★
+                              </span>
+                              {formatRating(entry.rating)}
+                            </span>
+                          )}
+
+                          {/* Three dots menu icon */}
+                          <span
+                            style={{
+                              marginLeft: "12px",
+                              fontSize: "16px", // Smaller
+                              letterSpacing: "1px",
+                              opacity: "0.6",
+                            }}
+                          >
+                            •••
+                          </span>
+                        </div>
                       </div>
-                    )}
-                  </div>
 
-                  {/* Entry Details */}
-                  <div style={{ flex: "1" }}>
-                    <h3
-                      style={{
-                        fontSize: "22px",
-                        margin: "0 0 4px 0",
-                        fontFamily: "Baskerville, serif",
-                        fontWeight: "normal",
-                      }}
-                    >
-                      {entry.title || "Untitled Entry"}
-                    </h3>
-
-                    <p
-                      style={{
-                        fontSize: "18px",
-                        margin: "0",
-                        opacity: "0.8",
-                        fontFamily: "Baskerville, serif",
-                      }}
-                    >
-                      {entry.creator || "Unknown Creator"}
-                      {/* Display actual rating from the entry */}
-                      <span
-                        style={{
-                          marginLeft: "10px",
-                          fontSize: "18px",
-                          opacity: "0.9",
-                        }}
-                      >
-                        ★ {formatRating(entry.rating)}
-                      </span>
-                    </p>
-                  </div>
+                      {/* Add divider line after each entry except the last one */}
+                      {index < groupedEntries[monthYear].length - 1 && (
+                        <div
+                          style={{
+                            height: "1px",
+                            backgroundColor: "rgba(255, 255, 255, 0.15)", // Very faint white line
+                            width: "100%",
+                          }}
+                        />
+                      )}
+                    </div>
+                  ))}
                 </div>
-              ))}
-            </div>
-          ))}
-        </div>
-      )}
+              </div>
+            ))}
+          </div>
+        )}
+      </div>
     </div>
   );
 };

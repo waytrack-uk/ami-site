@@ -98,18 +98,74 @@ const UserProfile = () => {
         // Categorize entries
         const categorized = {
           tv: entriesData.filter(
-            (entry) => entry.category?.toLowerCase() === "tv"
+            (entry) =>
+              entry.category?.toLowerCase() === "tv" &&
+              (entry.status === "completed" ||
+                !entry.status ||
+                entry.status === "" ||
+                entry.status === null)
           ),
           music: entriesData.filter(
-            (entry) => entry.category?.toLowerCase() === "music"
+            (entry) =>
+              entry.category?.toLowerCase() === "music" &&
+              (entry.status === "completed" ||
+                !entry.status ||
+                entry.status === "" ||
+                entry.status === null)
           ),
           podcasts: entriesData.filter(
-            (entry) => entry.category?.toLowerCase() === "podcast"
+            (entry) =>
+              entry.category?.toLowerCase() === "podcast" &&
+              (entry.status === "completed" ||
+                !entry.status ||
+                entry.status === "" ||
+                entry.status === null)
           ),
           books: entriesData.filter(
-            (entry) => entry.category?.toLowerCase() === "books"
+            (entry) =>
+              entry.category?.toLowerCase() === "book" &&
+              (entry.status === "completed" ||
+                !entry.status ||
+                entry.status === "" ||
+                entry.status === null)
           ),
         };
+
+        // Sort each category by date (newest first)
+        Object.keys(categorized).forEach((category) => {
+          categorized[category].sort((a, b) => {
+            // Try to use updatedAt, then fallback to createdAt
+            let dateA, dateB;
+
+            // Try to get dateA
+            if (a.updatedAt) {
+              dateA = a.updatedAt.toDate
+                ? a.updatedAt.toDate()
+                : new Date(a.updatedAt);
+            } else if (a.createdAt) {
+              dateA = a.createdAt.toDate
+                ? a.createdAt.toDate()
+                : new Date(a.createdAt);
+            } else {
+              dateA = new Date(0);
+            }
+
+            // Try to get dateB
+            if (b.updatedAt) {
+              dateB = b.updatedAt.toDate
+                ? b.updatedAt.toDate()
+                : new Date(b.updatedAt);
+            } else if (b.createdAt) {
+              dateB = b.createdAt.toDate
+                ? b.createdAt.toDate()
+                : new Date(b.createdAt);
+            } else {
+              dateB = new Date(0);
+            }
+
+            return dateB - dateA;
+          });
+        });
 
         setCategorizedEntries(categorized);
         setStatus("");
@@ -127,13 +183,30 @@ const UserProfile = () => {
     setShowDownloadButton(true);
   }, [username]);
 
+  // Add this inside the UserProfile component, next to your other useEffect hooks
+  useEffect(() => {
+    // Force the background color on all possible elements
+    document.documentElement.style.backgroundColor = "#f2e8d5";
+    document.body.style.backgroundColor = "#f2e8d5";
+
+    // This technique prevents the black overscroll in iOS Safari
+    const meta = document.createElement("meta");
+    meta.name = "theme-color";
+    meta.content = "#f2e8d5";
+    document.head.appendChild(meta);
+
+    return () => {
+      if (meta.parentNode) {
+        document.head.removeChild(meta);
+      }
+    };
+  }, []);
+
   // Widget component to display a category of entries
   const CategoryWidget = ({ title, entries, compact = false }) => {
     // Function to navigate to category page with username
     const handleCategoryClick = () => {
-      navigate(`/category/${title.toLowerCase()}`, {
-        state: { username: user.username },
-      });
+      navigate(`/${user.username}/${title.toLowerCase()}`);
     };
 
     // Function to get gradient based on category title
@@ -195,6 +268,15 @@ const UserProfile = () => {
     // Limit entries to display
     const displayLimit = 4; // Show 4 items for all widgets
 
+    // Filter for completed entries only (should already be filtered, but just to be sure)
+    const completedEntries = entries.filter(
+      (entry) =>
+        entry.status === "completed" ||
+        !entry.status ||
+        entry.status === "" ||
+        entry.status === null
+    );
+
     return (
       <div
         className="category-widget"
@@ -205,15 +287,15 @@ const UserProfile = () => {
           className="category-title"
           style={{
             fontSize: "24px",
-            marginBottom: "6px", // Further reduced from 8px to 6px
+            marginBottom: "6px",
             marginTop: "0",
           }}
         >
           {title}
         </h2>
         <div className="image-grid" style={gridStyle}>
-          {entries.length > 0
-            ? entries.slice(0, displayLimit).map((entry) => (
+          {completedEntries.length > 0
+            ? completedEntries.slice(0, displayLimit).map((entry) => (
                 <div
                   key={entry.id}
                   style={{
@@ -230,8 +312,8 @@ const UserProfile = () => {
                       alt={entry.title}
                       className="entry-image"
                       style={{
-                        width: isSquareGrid ? "55px" : "100%", // Fixed width for squares
-                        height: isSquareGrid ? "55px" : "90px", // Reduced from 65px to 55px for squares
+                        width: isSquareGrid ? "55px" : "100%",
+                        height: isSquareGrid ? "55px" : "90px",
                         aspectRatio: isSquareGrid ? "1/1" : "2/3",
                         objectFit: "cover",
                         borderRadius: "8px",
@@ -382,22 +464,22 @@ const UserProfile = () => {
                 backgroundColor: "white",
                 color: "#111",
                 border: "none",
-                borderRadius: "25px",
-                padding: "12px 30px",
-                fontSize: "25px",
+                borderRadius: "20px", // Reduced from 25px
+                padding: "10px 20px", // Reduced from 12px 30px
+                fontSize: "18px", // Reduced from 25px
                 cursor: "pointer",
                 boxShadow: "0 4px 20px rgba(0,0,0,0.25)",
                 display: "flex",
                 alignItems: "center",
                 justifyContent: "center",
-                gap: "8px",
+                gap: "6px", // Reduced from 8px
               }}
             >
               <img
                 src="/apple-logo.svg"
                 alt="Apple logo"
                 style={{
-                  height: "22px",
+                  height: "16px", // Reduced from 22px
                 }}
               />
               {buttonText}
