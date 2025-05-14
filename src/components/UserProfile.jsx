@@ -198,6 +198,8 @@ const UserProfile = () => {
         maxWidth: "800px",
         padding: "20px",
         paddingBottom: "80px",
+        minHeight: "100vh",
+        backgroundColor: "#f2e8d5",
       }}
     >
       {status ? (
