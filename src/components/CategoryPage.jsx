@@ -372,6 +372,37 @@ const CategoryPage = () => {
   // Check if we have any favorites to display
   const hasFavorites = favoriteEntries.length > 0;
 
+  // Add this near the top of your component, inside the function but before the return
+  useEffect(() => {
+    // Create a stylesheet to override any constraints for our gallery
+    const styleSheet = document.createElement("style");
+    styleSheet.textContent = `
+      .hide-scrollbar::-webkit-scrollbar {
+        display: none;
+      }
+      .hide-scrollbar {
+        -ms-overflow-style: none;
+        scrollbar-width: none;
+      }
+      .favorites-gallery-container {
+        margin: 0 -20px; /* Compensate for parent padding */
+        width: calc(100% + 40px); /* Full width plus the margins */
+        overflow-x: auto;
+      }
+      .favorites-wrapper {
+        padding-left: 20px; /* Add padding back on the left */
+        padding-right: 5px; /* Reduced padding on right to show scrolling */
+        display: flex;
+        gap: 10px;
+      }
+    `;
+    document.head.appendChild(styleSheet);
+
+    return () => {
+      document.head.removeChild(styleSheet);
+    };
+  }, []);
+
   return (
     <div
       className="font-serif"
@@ -427,6 +458,7 @@ const CategoryPage = () => {
           paddingTop: "50px",
           paddingLeft: "20px",
           paddingRight: "20px",
+          paddingBottom: "100px", // Add extra padding at bottom of content
         }}
       >
         {/* Category title - smaller as per screenshot */}
@@ -476,104 +508,96 @@ const CategoryPage = () => {
                   Archives with a 5-star rating
                 </p>
 
-                {/* Horizontal scrolling gallery */}
-                <div
-                  style={{
-                    display: "flex",
-                    overflowX: "auto",
-                    gap: "15px",
-                    padding: "5px 0 15px 0",
-                    scrollbarWidth: "none", // Firefox
-                    msOverflowStyle: "none", // IE and Edge
-                  }}
-                  className="hide-scrollbar"
-                >
-                  {favoriteEntries.map((entry) => (
-                    <div
-                      key={`favorite-gallery-${entry.id}`}
-                      style={{
-                        position: "relative",
-                        minWidth: "160px",
-                        height: "220px",
-                        borderRadius: "8px",
-                        overflow: "hidden",
-                        flexShrink: 0,
-                      }}
-                    >
-                      {/* Background image */}
+                {/* Horizontal scrolling gallery with custom class */}
+                <div className="favorites-gallery-container hide-scrollbar">
+                  <div className="favorites-wrapper">
+                    {favoriteEntries.map((entry) => (
                       <div
+                        key={`favorite-gallery-${entry.id}`}
                         style={{
-                          position: "absolute",
-                          width: "100%",
-                          height: "100%",
-                          backgroundImage: entry.thumbnailUrl
-                            ? `url(${entry.thumbnailUrl})`
-                            : "none",
-                          backgroundSize: "cover",
-                          backgroundPosition: "center",
-                          backgroundColor: entry.thumbnailUrl
-                            ? "transparent"
-                            : "rgba(255, 255, 255, 0.2)",
-                        }}
-                      />
-
-                      {/* Gradient overlay for text visibility - reduced to bottom 1/3 */}
-                      <div
-                        style={{
-                          position: "absolute",
-                          bottom: 0,
-                          left: 0,
-                          right: 0,
-                          height: "33%", // Reduced to 1/3 of the image
-                          background:
-                            "linear-gradient(to top, rgba(0,0,0,0.8) 0%, rgba(0,0,0,0.4) 80%, rgba(0,0,0,0) 100%)",
-                          zIndex: 1,
-                        }}
-                      />
-
-                      {/* Text overlay - positioned at bottom 1/3 */}
-                      <div
-                        style={{
-                          position: "absolute",
-                          bottom: 0,
-                          left: 0,
-                          right: 0,
-                          padding: "10px", // Further reduced padding
-                          zIndex: 2,
+                          position: "relative",
+                          minWidth: "160px",
+                          height: "220px",
+                          borderRadius: "8px",
+                          overflow: "hidden",
+                          flexShrink: 0,
                         }}
                       >
-                        <h4
+                        {/* Background image */}
+                        <div
                           style={{
-                            fontSize: "14px", // Smaller title font size
-                            margin: "0 0 1px 0", // Less space between title and creator
-                            fontFamily:
-                              "-apple-system, BlinkMacSystemFont, 'SF Pro Text', 'Segoe UI', Roboto, Helvetica, Arial, sans-serif",
-                            fontWeight: "500",
-                            color: "white",
-                            textShadow: "0px 1px 2px rgba(0,0,0,0.5)",
-                            lineHeight: "1.2", // Tighter line height
+                            position: "absolute",
+                            width: "100%",
+                            height: "100%",
+                            backgroundImage: entry.thumbnailUrl
+                              ? `url(${entry.thumbnailUrl})`
+                              : "none",
+                            backgroundSize: "cover",
+                            backgroundPosition: "center",
+                            backgroundColor: entry.thumbnailUrl
+                              ? "transparent"
+                              : "rgba(255, 255, 255, 0.2)",
                           }}
-                        >
-                          {entry.title || "Untitled Entry"}
-                        </h4>
+                        />
 
-                        <p
+                        {/* Gradient overlay for text visibility */}
+                        <div
                           style={{
-                            fontSize: "12px", // Smaller creator font
-                            margin: "0",
-                            fontFamily:
-                              "-apple-system, BlinkMacSystemFont, 'SF Pro Text', 'Segoe UI', Roboto, Helvetica, Arial, sans-serif",
-                            color: "white",
-                            opacity: "0.9",
-                            textShadow: "0px 1px 2px rgba(0,0,0,0.5)",
-                            lineHeight: "1.2", // Tighter line height
+                            position: "absolute",
+                            bottom: 0,
+                            left: 0,
+                            right: 0,
+                            height: "33%",
+                            background:
+                              "linear-gradient(to top, rgba(0,0,0,0.8) 0%, rgba(0,0,0,0.4) 80%, rgba(0,0,0,0) 100%)",
+                            zIndex: 1,
+                          }}
+                        />
+
+                        {/* Text overlay */}
+                        <div
+                          style={{
+                            position: "absolute",
+                            bottom: 0,
+                            left: 0,
+                            right: 0,
+                            padding: "10px",
+                            zIndex: 2,
                           }}
                         >
-                          {entry.creator || "Unknown Creator"}
-                        </p>
+                          <h4
+                            style={{
+                              fontSize: "14px",
+                              margin: "0 0 1px 0",
+                              fontFamily:
+                                "-apple-system, BlinkMacSystemFont, 'SF Pro Text', 'Segoe UI', Roboto, Helvetica, Arial, sans-serif",
+                              fontWeight: "500",
+                              color: "white",
+                              textShadow: "0px 1px 2px rgba(0,0,0,0.5)",
+                              lineHeight: "1.2",
+                            }}
+                          >
+                            {entry.title || "Untitled Entry"}
+                          </h4>
+
+                          <p
+                            style={{
+                              fontSize: "12px",
+                              margin: "0",
+                              fontFamily:
+                                "-apple-system, BlinkMacSystemFont, 'SF Pro Text', 'Segoe UI', Roboto, Helvetica, Arial, sans-serif",
+                              color: "white",
+                              opacity: "0.9",
+                              textShadow: "0px 1px 2px rgba(0,0,0,0.5)",
+                              lineHeight: "1.2",
+                            }}
+                          >
+                            {entry.creator || "Unknown Creator"}
+                          </p>
+                        </div>
                       </div>
-                    </div>
-                  ))}
+                    ))}
+                  </div>
                 </div>
               </div>
             )}
@@ -744,6 +768,9 @@ const CategoryPage = () => {
           </div>
         )}
       </div>
+
+      {/* Spacer div at bottom to ensure scrollability */}
+      <div style={{ height: "80px" }} />
     </div>
   );
 };

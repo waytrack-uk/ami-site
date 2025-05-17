@@ -215,22 +215,22 @@ const UserProfile = () => {
         case "books":
           return {
             background:
-              "linear-gradient(to bottom right, rgba(209, 166, 115, 1), rgba(184, 133, 89, 1), rgba(158, 107, 64, 1))",
+              "linear-gradient(to bottom right, #d1a673, rgba(184, 133, 89, 1), rgba(158, 107, 64, 1))",
           };
         case "tv":
           return {
             background:
-              "linear-gradient(to bottom right, rgba(20, 102, 122, 1), rgba(15, 71, 92, 1), rgba(10, 43, 61, 1))",
+              "linear-gradient(to bottom right, #14667a, rgba(15, 71, 92, 1), rgba(10, 43, 61, 1))",
           };
         case "music":
           return {
             background:
-              "linear-gradient(to bottom right, rgba(255, 89, 102, 1), rgba(217, 64, 77, 1), rgba(179, 38, 51, 1))",
+              "linear-gradient(to bottom right, #ff5966, rgba(217, 64, 77, 1), rgba(179, 38, 51, 1))",
           };
         case "podcasts":
           return {
             background:
-              "linear-gradient(to bottom right, rgba(204, 115, 242, 1), rgba(166, 77, 204, 1), rgba(128, 38, 166, 1))",
+              "linear-gradient(to bottom right, #cc73f2, rgba(166, 77, 204, 1), rgba(128, 38, 166, 1))",
           };
         default:
           return {};
@@ -244,9 +244,9 @@ const UserProfile = () => {
     const widgetStyle = {
       ...getGradientStyle(title),
       borderRadius: "16px",
-      padding: "15px",
+      padding: "12px",
       marginBottom: "20px",
-      height: "180px",
+      height: "140px",
       cursor: "pointer",
       transition: "transform 0.2s ease",
       display: "flex",
@@ -260,9 +260,10 @@ const UserProfile = () => {
         ? "repeat(2, 1fr)" // 2x2 grid for Music/Podcasts
         : "repeat(4, 1fr)", // 4 horizontal items for TV/Books
       gridTemplateRows: isSquareGrid ? "repeat(2, 1fr)" : "1fr",
-      gap: isSquareGrid ? "8px" : "10px", // Smaller gap for square grid
+      gap: isSquareGrid ? "6px" : "10px",
       flex: "1",
       overflow: "hidden",
+      marginTop: isSquareGrid ? "8px" : "5px",
     };
 
     // Limit entries to display
@@ -287,7 +288,7 @@ const UserProfile = () => {
           className="category-title"
           style={{
             fontSize: "24px",
-            marginBottom: "6px",
+            marginBottom: isSquareGrid ? "2px" : "6px",
             marginTop: "0",
           }}
         >
@@ -304,6 +305,7 @@ const UserProfile = () => {
                     display: "flex",
                     justifyContent: "center",
                     alignItems: "center",
+                    padding: isSquareGrid ? "0" : "3px",
                   }}
                 >
                   {entry.thumbnailUrl && (
@@ -312,8 +314,8 @@ const UserProfile = () => {
                       alt={entry.title}
                       className="entry-image"
                       style={{
-                        width: isSquareGrid ? "55px" : "100%",
-                        height: isSquareGrid ? "55px" : "90px",
+                        width: isSquareGrid ? "55px" : "65px",
+                        height: isSquareGrid ? "55px" : "95px",
                         aspectRatio: isSquareGrid ? "1/1" : "2/3",
                         objectFit: "cover",
                         borderRadius: "8px",
@@ -335,7 +337,7 @@ const UserProfile = () => {
         margin: "0 auto",
         maxWidth: "800px",
         padding: "20px",
-        paddingBottom: "80px",
+        paddingBottom: "180px",
         minHeight: "100vh",
         backgroundColor: "#f2e8d5",
       }}
@@ -434,6 +436,9 @@ const UserProfile = () => {
           )}
         </>
       )}
+
+      {/* Add a spacer div at the bottom */}
+      <div style={{ height: "80px" }} />
 
       {showDownloadButton && (
         <div
