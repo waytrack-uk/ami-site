@@ -14,27 +14,27 @@ const ArchivePage = () => {
   const [archiveLink, setArchiveLink] = useState("");
   const [gradientStyle, setGradientStyle] = useState({});
 
-  // Define the available gradients from UserProfile
+  // Define the available gradients with the updated colors
   const gradients = [
+    // {
+    //   // Books gradient (gold)
+    //   background:
+    //     "linear-gradient(to right, #f2d9b3, #ecd1a6, #e6bf8c, #deb378, #e6bf8c, #ecd1a6, #f2d9b3)",
+    // },
     {
-      // Books gradient
+      // TV gradient (cyan)
       background:
-        "linear-gradient(to bottom right, #d1a673, rgba(184, 133, 89, 1), rgba(158, 107, 64, 1))",
+        "linear-gradient(to right, #66bfd9, #5eb8d1, #4da6bf, #4099b3, #4da6bf, #5eb8d1, #66bfd9)",
     },
     {
-      // TV gradient
+      // Music gradient (coral)
       background:
-        "linear-gradient(to bottom right, #14667a, rgba(15, 71, 92, 1), rgba(10, 43, 61, 1))",
+        "linear-gradient(to right, #ff8c99, #fa8591, #f27380, #eb6673, #f27380, #fa8591, #ff8c99)",
     },
     {
-      // Music gradient
+      // Podcasts gradient (lavender)
       background:
-        "linear-gradient(to bottom right, #ff5966, rgba(217, 64, 77, 1), rgba(179, 38, 51, 1))",
-    },
-    {
-      // Podcasts gradient
-      background:
-        "linear-gradient(to bottom right, #cc73f2, rgba(166, 77, 204, 1), rgba(128, 38, 166, 1))",
+        "linear-gradient(to right, #e6a6ff, #e09efa, #d98cf2, #d180eb, #d98cf2, #e09efa, #e6a6ff)",
     },
   ];
 
@@ -277,9 +277,34 @@ const ArchivePage = () => {
         Archive
       </h1>
 
+      {/* Welcome widget - only shows on homepage (not in selected view) */}
+      {/* {!selectedUser && (
+        <div
+          className="w-full max-w-md text-white rounded-xl p-8 mb-6 shadow-lg text-center"
+          style={gradientStyle}
+        >
+          <h2
+            className="text-3xl mb-2 font-normal"
+            style={{
+              fontFamily: "Baskerville, serif",
+            }}
+          >
+            Welcome to Archive
+          </h2>
+          <p
+            className="text-xl"
+            style={{
+              fontFamily: "Baskerville, serif",
+            }}
+          >
+            This is your Link
+          </p>
+        </div>
+      )} */}
+
       {/* Original rectangular widget with random gradient and increased bottom padding */}
       <div
-        className="w-full max-w-md text-white rounded-xl p-8 pb-12 shadow-lg relative"
+        className="w-full max-w-md text-white rounded-xl p-8 pb-4 shadow-lg relative"
         style={gradientStyle}
       >
         {/* Dynamic header based on selection state - with bold text - only show when no user is selected */}
@@ -342,13 +367,13 @@ const ArchivePage = () => {
             <div className="text-white mb-4 text-center">{status}</div>
           )}
 
-          {/* Selected user and link display - Instagram-style share card */}
+          {/* Selected user and link display */}
           {selectedUser && (
-            <div className="py-2 w-full max-w-xs">
-              {/* White square card with profile pic and link */}
-              <div className="bg-white rounded-xl shadow-lg p-8 aspect-square flex flex-col items-center justify-center">
-                {/* Profile picture - larger size */}
-                <div className="w-36 h-36 rounded-full bg-gray-200 overflow-hidden flex items-center justify-center mb-6">
+            <div className="w-full max-w-xs">
+              {/* Profile picture and user info directly in the gradient box */}
+              <div className="flex flex-col items-center justify-center">
+                {/* Profile picture - larger size - with thinner white border */}
+                <div className="w-36 h-36 rounded-full bg-white bg-opacity-90 overflow-hidden flex items-center justify-center mb-6 shadow-md border-2 border-white border-opacity-50">
                   {selectedUser.avatarUrl ? (
                     <img
                       src={selectedUser.avatarUrl}
@@ -363,89 +388,33 @@ const ArchivePage = () => {
                 </div>
 
                 {/* Username display */}
-                <div className="text-xl font-bold text-gray-800 mb-2">
+                <div className="text-2xl font-bold text-white mb-10">
                   @{selectedUser.username || "username"}
                 </div>
 
-                {/* Simplified link display */}
-                <div className="text-black text-center text-xl mb-8">
-                  seemyarchive/{getUserRouteParam(selectedUser)}
-                </div>
-              </div>
-
-              {/* Action buttons - with text labels */}
-              <div className="grid grid-cols-3 gap-2 mt-4">
-                <button
-                  onClick={handleShare}
-                  className="bg-white rounded-lg py-3 flex flex-col items-center justify-center shadow-md"
-                  aria-label="Share profile"
-                >
-                  <svg
-                    xmlns="http://www.w3.org/2000/svg"
-                    width="28"
-                    height="28"
-                    viewBox="0 0 24 24"
-                    fill="none"
-                    stroke="currentColor"
-                    strokeWidth="2"
-                    strokeLinecap="round"
-                    strokeLinejoin="round"
-                    className="mb-1 text-gray-800"
-                  >
-                    <path d="M4 12v8a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2v-8"></path>
-                    <polyline points="16 6 12 2 8 6"></polyline>
-                    <line x1="12" y1="2" x2="12" y2="15"></line>
-                  </svg>
-                  <span className="text-sm text-gray-800">Share</span>
-                </button>
-
+                {/* Link display as a clickable button with copy icon */}
                 <button
                   onClick={handleCopyLink}
-                  className="bg-white rounded-lg py-3 flex flex-col items-center justify-center shadow-md"
-                  aria-label="Copy"
+                  className="text-black text-center text-xl mb-4 bg-white px-6 py-2 rounded-xl
+                   shadow-sm cursor-pointer hover:bg-gray-50 transition-colors flex items-center justify-center gap-2"
+                  aria-label="Copy link to clipboard"
                 >
+                  <span>seemyarchive/{getUserRouteParam(selectedUser)}</span>
                   <svg
                     xmlns="http://www.w3.org/2000/svg"
-                    width="28"
-                    height="28"
-                    viewBox="0 0 24 24"
-                    fill="none"
-                    stroke="currentColor"
-                    strokeWidth="2.5"
-                    strokeLinecap="round"
-                    strokeLinejoin="round"
-                    className="mb-1 text-gray-800"
-                  >
-                    <path d="M10 13a5 5 0 0 0 7.54.54l3-3a5 5 0 0 0-7.07-7.07l-1.72 1.71" />
-                    <path d="M14 11a5 5 0 0 0-7.54-.54l-3 3a5 5 0 0 0 7.07 7.07l1.71-1.71" />
-                  </svg>
-                  <span className="text-sm text-gray-800">Copy</span>
-                </button>
-
-                <button
-                  onClick={() => {
-                    setSelectedUser(null);
-                    setArchiveLink("");
-                  }}
-                  className="bg-white rounded-lg py-3 flex flex-col items-center justify-center shadow-md"
-                  aria-label="Close"
-                >
-                  <svg
-                    xmlns="http://www.w3.org/2000/svg"
-                    width="28"
-                    height="28"
+                    width="16"
+                    height="16"
                     viewBox="0 0 24 24"
                     fill="none"
                     stroke="currentColor"
                     strokeWidth="2"
                     strokeLinecap="round"
                     strokeLinejoin="round"
-                    className="mb-1 text-gray-800"
+                    className="text-gray-500"
                   >
-                    <line x1="18" y1="6" x2="6" y2="18"></line>
-                    <line x1="6" y1="6" x2="18" y2="18"></line>
+                    <path d="M10 13a5 5 0 0 0 7.54.54l3-3a5 5 0 0 0-7.07-7.07l-1.72 1.71"></path>
+                    <path d="M14 11a5 5 0 0 0-7.54-.54l-3 3a5 5 0 0 0 7.07 7.07l1.71-1.71"></path>
                   </svg>
-                  <span className="text-sm text-gray-800">Close</span>
                 </button>
               </div>
             </div>
@@ -502,6 +471,87 @@ const ArchivePage = () => {
           )}
         </div>
       </div>
+
+      {/* Action buttons - completely outside and below the main widget */}
+      {selectedUser && (
+        <div className="w-full max-w-md -mt-4 grid grid-cols-3 gap-3">
+          <button
+            onClick={handleShare}
+            className="rounded-lg py-3 flex flex-col items-center justify-center shadow-md"
+            aria-label="Share profile"
+            style={gradientStyle}
+          >
+            <svg
+              xmlns="http://www.w3.org/2000/svg"
+              width="28"
+              height="28"
+              viewBox="0 0 24 24"
+              fill="none"
+              stroke="currentColor"
+              strokeWidth="2"
+              strokeLinecap="round"
+              strokeLinejoin="round"
+              className="mb-1 text-white"
+            >
+              <path d="M4 12v8a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2v-8"></path>
+              <polyline points="16 6 12 2 8 6"></polyline>
+              <line x1="12" y1="2" x2="12" y2="15"></line>
+            </svg>
+            <span className="text-sm text-white font-medium">Share</span>
+          </button>
+
+          <button
+            onClick={handleCopyLink}
+            className="rounded-lg py-3 flex flex-col items-center justify-center shadow-md"
+            aria-label="Copy"
+            style={gradientStyle}
+          >
+            <svg
+              xmlns="http://www.w3.org/2000/svg"
+              width="28"
+              height="28"
+              viewBox="0 0 24 24"
+              fill="none"
+              stroke="currentColor"
+              strokeWidth="2.5"
+              strokeLinecap="round"
+              strokeLinejoin="round"
+              className="mb-1 text-white"
+            >
+              <path d="M10 13a5 5 0 0 0 7.54.54l3-3a5 5 0 0 0-7.07-7.07l-1.72 1.71" />
+              <path d="M14 11a5 5 0 0 0-7.54-.54l-3 3a5 5 0 0 0 7.07 7.07l1.71-1.71" />
+            </svg>
+            <span className="text-sm text-white font-medium">Copy</span>
+          </button>
+
+          <button
+            onClick={() => {
+              setSelectedUser(null);
+              setArchiveLink("");
+            }}
+            className="rounded-lg py-3 flex flex-col items-center justify-center shadow-md"
+            aria-label="Close"
+            style={gradientStyle}
+          >
+            <svg
+              xmlns="http://www.w3.org/2000/svg"
+              width="28"
+              height="28"
+              viewBox="0 0 24 24"
+              fill="none"
+              stroke="currentColor"
+              strokeWidth="2"
+              strokeLinecap="round"
+              strokeLinejoin="round"
+              className="mb-1 text-white"
+            >
+              <line x1="18" y1="6" x2="6" y2="18"></line>
+              <line x1="6" y1="6" x2="18" y2="18"></line>
+            </svg>
+            <span className="text-sm text-white font-medium">Close</span>
+          </button>
+        </div>
+      )}
 
       {/* Extra space at the bottom of the page */}
       <div className="h-16"></div>
