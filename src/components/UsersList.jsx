@@ -291,38 +291,41 @@ const ArchivePage = () => {
 
   return (
     <div
-      className="min-h-screen w-full font-sans flex flex-col items-center pt-28 gap-12 px-4"
+      className="min-h-screen w-full font-sans flex flex-col items-center pt-28 gap-4 px-4"
       style={{ backgroundColor: "#f2e8d5" }}
       onTouchMove={handleTouchMove}
       onTouchEnd={handleTouchEnd}
     >
       {/* Only show the title when no user is selected */}
       {!selectedUser && (
-        <h1
-          className="text-6xl md:text-8xl text-center"
-          style={{
-            fontFamily: "Baskerville, serif",
-          }}
-        >
-          Find your Archive link.
-        </h1>
+        <div className="mb-3">
+          <h1
+            className="text-5xl md:text-8xl text-center"
+            style={{
+              fontFamily: "Baskerville, serif",
+            }}
+          >
+            Find your <br />
+            <span className="text-5xl md:text-8xl">Archive</span> link.
+          </h1>
+        </div>
       )}
 
       {/* Search bar only, no colored widget */}
       {!selectedUser ? (
         <div className="flex flex-col items-center w-full max-w-md">
-          <div className="relative w-full max-w-xs">
+          <div className="relative w-full max-w-sm">
             <input
               type="text"
               placeholder="Type your username..."
-              className="w-full py-3 pl-16 pr-10 border border-gray-300 rounded-full bg-white shadow-md focus:outline-none focus:ring-1 focus:ring-gray-400 focus:border-gray-400 text-black"
+              className="w-full py-3 pl-12 pr-10 border border-gray-300 rounded-full bg-white focus:outline-none text-black"
               value={searchTerm}
               onChange={handleSearchChange}
               ref={searchInputRef}
             />
-            <div className="absolute inset-y-0 left-0 flex items-center pl-8 pointer-events-none">
+            <div className="absolute inset-y-0 left-0 flex items-center pl-4 pointer-events-none">
               <svg
-                className="w-5 h-5 text-gray-500"
+                className="w-5 h-5 text-gray-400"
                 fill="none"
                 stroke="currentColor"
                 viewBox="0 0 24 24"
@@ -339,12 +342,26 @@ const ArchivePage = () => {
 
             {/* Clear search button */}
             {searchTerm && (
-              <div className="absolute inset-y-0 right-0 flex items-center pr-8">
+              <div className="absolute inset-y-0 right-0 flex items-center pr-4">
                 <button
                   onClick={handleClearSearch}
-                  className="w-5 h-5 bg-black rounded-full flex items-center justify-center text-white text-xs"
+                  className="w-5 h-5 bg-gray-400 rounded-full flex items-center justify-center text-white transition-colors"
+                  aria-label="Clear search"
                 >
-                  X
+                  <svg
+                    xmlns="http://www.w3.org/2000/svg"
+                    width="12"
+                    height="12"
+                    viewBox="0 0 24 24"
+                    fill="none"
+                    stroke="currentColor"
+                    strokeWidth="2"
+                    strokeLinecap="round"
+                    strokeLinejoin="round"
+                  >
+                    <line x1="18" y1="6" x2="6" y2="18"></line>
+                    <line x1="6" y1="6" x2="18" y2="18"></line>
+                  </svg>
                 </button>
               </div>
             )}
@@ -357,47 +374,55 @@ const ArchivePage = () => {
 
           {/* Users list section - no shadow */}
           {!status && hasSearched && (
-            <div className="w-full max-w-xs mt-4">
+            <div className="w-full max-w-md mt-4">
               {filteredUsers.length === 0 ? (
                 <div className="text-center text-gray-700 mt-4">
                   No users found matching "{searchTerm}"
                 </div>
               ) : (
-                <div className="max-h-64 overflow-y-auto bg-white rounded-lg">
-                  {filteredUsers.map((user) => (
+                <div className="max-h-64 overflow-y-auto bg-white rounded-2xl pt-2 pb-2">
+                  {filteredUsers.map((user, index) => (
                     <div
                       key={user.id}
                       onClick={() => handleUserSelection(user)}
-                      className="block p-2 rounded-lg hover:bg-gray-100 transition-all duration-200 cursor-pointer"
+                      className="block rounded-lg transition-all duration-200 cursor-pointer"
                     >
-                      <div className="flex items-center">
-                        <div className="w-12 h-12 rounded-full bg-gray-200 overflow-hidden flex items-center justify-center mr-4">
-                          {user.avatarUrl ? (
-                            <img
-                              src={user.avatarUrl}
-                              alt={user.username || "User"}
-                              className="w-full h-full object-cover"
-                            />
-                          ) : (
-                            <svg
-                              width="24"
-                              height="24"
-                              viewBox="0 0 24 24"
-                              fill="#888"
-                            >
-                              <path d="M12 2C6.48 2 2 6.48 2 12s4.48 10 10 10 10-4.48 10-10S17.52 2 12 2zm0 3c1.66 0 3 1.34 3 3s-1.34 3-3 3-3-1.34-3-3 1.34-3 3-3zm0 14.2c-2.5 0-4.71-1.28-6-3.22.03-1.99 4-3.08 6-3.08 1.99 0 5.97 1.09 6 3.08-1.29 1.94-3.5 3.22-6 3.22z" />
-                            </svg>
-                          )}
-                        </div>
-                        <div>
-                          <div className="font-medium text-gray-800">
-                            {user.username || "username"}
+                      <div className="p-2">
+                        <div className="flex items-center">
+                          <div className="w-8 h-8 rounded-full bg-gray-200 overflow-hidden flex items-center justify-center mr-2">
+                            {user.avatarUrl ? (
+                              <img
+                                src={user.avatarUrl}
+                                alt={user.username || "User"}
+                                className="w-full h-full object-cover"
+                              />
+                            ) : (
+                              <svg
+                                width="40"
+                                height="40"
+                                viewBox="0 0 24 24"
+                                fill="#d4d4d4"
+                              >
+                                <path d="M12 2C6.48 2 2 6.48 2 12s4.48 10 10 10 10-4.48 10-10S17.52 2 12 2zm0 3c1.66 0 3 1.34 3 3s-1.34 3-3 3-3-1.34-3-3 1.34-3 3-3zm0 14.2c-2.5 0-4.71-1.28-6-3.22.03-1.99 4-3.08 6-3.08 1.99 0 5.97 1.09 6 3.08-1.29 1.94-3.5 3.22-6 3.22z" />
+                              </svg>
+                            )}
                           </div>
-                          <div className="text-gray-500 text-sm">
-                            {user.fullName || user.name || user.username}
+                          <div>
+                            <div className="font-medium text-gray-800 text-xs">
+                              {user.username || "username"}
+                            </div>
+                            <div className="text-gray-500 text-xs">
+                              {user.fullName || user.name || user.username}
+                            </div>
                           </div>
                         </div>
                       </div>
+                      {index < filteredUsers.length - 1 && (
+                        <div className="flex items-center">
+                          <div className="w-12 flex-shrink-0"></div>
+                          <div className="border-t border-gray-100 w-full"></div>
+                        </div>
+                      )}
                     </div>
                   ))}
                 </div>
