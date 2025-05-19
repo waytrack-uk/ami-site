@@ -13,6 +13,8 @@ const ArchivePage = () => {
   const [selectedUser, setSelectedUser] = useState(null);
   const [archiveLink, setArchiveLink] = useState("");
   const [gradientStyle, setGradientStyle] = useState({});
+  const [isTouching, setIsTouching] = useState(false);
+  const searchInputRef = React.useRef(null);
 
   // Define the available gradients with the updated colors
   const gradients = [
@@ -263,116 +265,155 @@ const ArchivePage = () => {
     prompt("Copy this link to share:", url);
   };
 
+  // Add touch event handlers for the entire component
+  const handleTouchMove = (e) => {
+    if (!isTouching) {
+      setIsTouching(true);
+      // Dismiss keyboard by blurring any active input
+      if (
+        document.activeElement &&
+        (document.activeElement.tagName === "INPUT" ||
+          document.activeElement.tagName === "TEXTAREA")
+      ) {
+        document.activeElement.blur();
+      }
+
+      // Additional force for iOS
+      if (searchInputRef.current) {
+        searchInputRef.current.blur();
+      }
+    }
+  };
+
+  const handleTouchEnd = () => {
+    setIsTouching(false);
+  };
+
   return (
     <div
       className="min-h-screen w-full font-sans flex flex-col items-center pt-28 gap-12 px-4"
       style={{ backgroundColor: "#f2e8d5" }}
+      onTouchMove={handleTouchMove}
+      onTouchEnd={handleTouchEnd}
     >
-      <h1
-        className="text-6xl md:text-8xl"
-        style={{
-          fontFamily: "Baskerville, serif",
-        }}
-      >
-        Archive
-      </h1>
-
-      {/* Welcome widget - only shows on homepage (not in selected view) */}
-      {/* {!selectedUser && (
-        <div
-          className="w-full max-w-md text-white rounded-xl p-8 mb-6 shadow-lg text-center"
-          style={gradientStyle}
+      {/* Only show the title when no user is selected */}
+      {!selectedUser && (
+        <h1
+          className="text-6xl md:text-8xl text-center"
+          style={{
+            fontFamily: "Baskerville, serif",
+          }}
         >
-          <h2
-            className="text-3xl mb-2 font-normal"
-            style={{
-              fontFamily: "Baskerville, serif",
-            }}
-          >
-            Welcome to Archive
-          </h2>
-          <p
-            className="text-xl"
-            style={{
-              fontFamily: "Baskerville, serif",
-            }}
-          >
-            This is your Link
-          </p>
-        </div>
-      )} */}
+          Find your Archive link.
+        </h1>
+      )}
 
-      {/* Original rectangular widget with random gradient and increased bottom padding */}
-      <div
-        className="w-full max-w-md text-white rounded-xl p-8 pb-4 shadow-lg relative"
-        style={gradientStyle}
-      >
-        {/* Dynamic header based on selection state - with bold text - only show when no user is selected */}
-        {!selectedUser && (
-          <h2
-            className="text-center text-2xl sm:text-2xl mb-8 font-semibold"
-            style={{
-              fontFamily: "Baskerville, serif",
-            }}
-          >
-            Find your link!
-          </h2>
-        )}
+      {/* Search bar only, no colored widget */}
+      {!selectedUser ? (
+        <div className="flex flex-col items-center w-full max-w-md">
+          <div className="relative w-full max-w-xs">
+            <input
+              type="text"
+              placeholder="Type your username..."
+              className="w-full py-3 pl-16 pr-10 border border-gray-300 rounded-full bg-white shadow-md focus:outline-none focus:ring-1 focus:ring-gray-400 focus:border-gray-400 text-black"
+              value={searchTerm}
+              onChange={handleSearchChange}
+              ref={searchInputRef}
+            />
+            <div className="absolute inset-y-0 left-0 flex items-center pl-8 pointer-events-none">
+              <svg
+                className="w-5 h-5 text-gray-500"
+                fill="none"
+                stroke="currentColor"
+                viewBox="0 0 24 24"
+                xmlns="http://www.w3.org/2000/svg"
+              >
+                <path
+                  strokeLinecap="round"
+                  strokeLinejoin="round"
+                  strokeWidth="2"
+                  d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z"
+                ></path>
+              </svg>
+            </div>
 
-        {/* Main content area with centered search */}
-        <div className="flex flex-col items-center">
-          {/* Search section - only show when no user is selected */}
-          {!selectedUser && (
-            <div className="relative w-full max-w-xs">
-              <input
-                type="text"
-                placeholder="Type your username..."
-                className="w-full py-3 pl-16 pr-10 border border-white rounded-full bg-white bg-opacity-90 focus:outline-none focus:ring-1 focus:ring-white focus:border-white text-black"
-                value={searchTerm}
-                onChange={handleSearchChange}
-              />
-              <div className="absolute inset-y-0 left-0 flex items-center pl-8 pointer-events-none">
-                <svg
-                  className="w-5 h-5 text-gray-500"
-                  fill="none"
-                  stroke="currentColor"
-                  viewBox="0 0 24 24"
-                  xmlns="http://www.w3.org/2000/svg"
+            {/* Clear search button */}
+            {searchTerm && (
+              <div className="absolute inset-y-0 right-0 flex items-center pr-8">
+                <button
+                  onClick={handleClearSearch}
+                  className="w-5 h-5 bg-black rounded-full flex items-center justify-center text-white text-xs"
                 >
-                  <path
-                    strokeLinecap="round"
-                    strokeLinejoin="round"
-                    strokeWidth="2"
-                    d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z"
-                  ></path>
-                </svg>
+                  X
+                </button>
               </div>
+            )}
+          </div>
 
-              {/* Clear search button */}
-              {searchTerm && (
-                <div className="absolute inset-y-0 right-0 flex items-center pr-8">
-                  <button
-                    onClick={handleClearSearch}
-                    className="w-5 h-5 bg-black rounded-full flex items-center justify-center text-white text-xs"
-                  >
-                    X
-                  </button>
+          {/* Status message display - no shadow */}
+          {status && (
+            <div className="text-gray-700 my-4 text-center">{status}</div>
+          )}
+
+          {/* Users list section - no shadow */}
+          {!status && hasSearched && (
+            <div className="w-full max-w-xs mt-4">
+              {filteredUsers.length === 0 ? (
+                <div className="text-center text-gray-700 mt-4">
+                  No users found matching "{searchTerm}"
+                </div>
+              ) : (
+                <div className="max-h-64 overflow-y-auto bg-white rounded-lg">
+                  {filteredUsers.map((user) => (
+                    <div
+                      key={user.id}
+                      onClick={() => handleUserSelection(user)}
+                      className="block p-2 rounded-lg hover:bg-gray-100 transition-all duration-200 cursor-pointer"
+                    >
+                      <div className="flex items-center">
+                        <div className="w-12 h-12 rounded-full bg-gray-200 overflow-hidden flex items-center justify-center mr-4">
+                          {user.avatarUrl ? (
+                            <img
+                              src={user.avatarUrl}
+                              alt={user.username || "User"}
+                              className="w-full h-full object-cover"
+                            />
+                          ) : (
+                            <svg
+                              width="24"
+                              height="24"
+                              viewBox="0 0 24 24"
+                              fill="#888"
+                            >
+                              <path d="M12 2C6.48 2 2 6.48 2 12s4.48 10 10 10 10-4.48 10-10S17.52 2 12 2zm0 3c1.66 0 3 1.34 3 3s-1.34 3-3 3-3-1.34-3-3 1.34-3 3-3zm0 14.2c-2.5 0-4.71-1.28-6-3.22.03-1.99 4-3.08 6-3.08 1.99 0 5.97 1.09 6 3.08-1.29 1.94-3.5 3.22-6 3.22z" />
+                            </svg>
+                          )}
+                        </div>
+                        <div>
+                          <div className="font-medium text-gray-800">
+                            {user.username || "username"}
+                          </div>
+                          <div className="text-gray-500 text-sm">
+                            {user.fullName || user.name || user.username}
+                          </div>
+                        </div>
+                      </div>
+                    </div>
+                  ))}
                 </div>
               )}
             </div>
           )}
-
-          {/* Status message display */}
-          {status && !selectedUser && (
-            <div className="text-white mb-4 text-center">{status}</div>
-          )}
-
-          {/* Selected user and link display */}
-          {selectedUser && (
+        </div>
+      ) : (
+        /* Selected user view with the colored widget and shadow restored */
+        <div
+          className="w-full max-w-md text-white rounded-xl p-8 pb-4 shadow-lg relative"
+          style={gradientStyle}
+        >
+          <div className="flex flex-col items-center">
             <div className="w-full max-w-xs">
-              {/* Profile picture and user info directly in the gradient box */}
               <div className="flex flex-col items-center justify-center">
-                {/* Profile picture - larger size - with thinner white border */}
                 <div className="w-36 h-36 rounded-full bg-white bg-opacity-90 overflow-hidden flex items-center justify-center mb-6 shadow-md border-2 border-white border-opacity-50">
                   {selectedUser.avatarUrl ? (
                     <img
@@ -387,12 +428,10 @@ const ArchivePage = () => {
                   )}
                 </div>
 
-                {/* Username display */}
                 <div className="text-2xl font-bold text-white mb-10">
                   @{selectedUser.username || "username"}
                 </div>
 
-                {/* Link display as a clickable button with copy icon */}
                 <button
                   onClick={handleCopyLink}
                   className="text-black text-center text-xl mb-4 bg-white px-6 py-2 rounded-xl
@@ -418,61 +457,11 @@ const ArchivePage = () => {
                 </button>
               </div>
             </div>
-          )}
-
-          {/* Users list section - only show when user has searched and no user is selected */}
-          {!status && hasSearched && !selectedUser && (
-            <div className="w-full max-w-xs mt-4">
-              {filteredUsers.length === 0 ? (
-                <div className="text-center text-white mt-4">
-                  No users found matching "{searchTerm}"
-                </div>
-              ) : (
-                <div className="max-h-64 overflow-y-auto bg-white bg-opacity-10 rounded-lg">
-                  {filteredUsers.map((user) => (
-                    <div
-                      key={user.id}
-                      onClick={() => handleUserSelection(user)}
-                      className="block p-2 rounded-lg hover:bg-white hover:bg-opacity-20 transition-all duration-200 cursor-pointer"
-                    >
-                      <div className="flex items-center">
-                        <div className="w-12 h-12 rounded-full bg-gray-200 overflow-hidden flex items-center justify-center mr-4">
-                          {user.avatarUrl ? (
-                            <img
-                              src={user.avatarUrl}
-                              alt={user.username || "User"}
-                              className="w-full h-full object-cover"
-                            />
-                          ) : (
-                            <svg
-                              width="24"
-                              height="24"
-                              viewBox="0 0 24 24"
-                              fill="#888"
-                            >
-                              <path d="M12 2C6.48 2 2 6.48 2 12s4.48 10 10 10 10-4.48 10-10S17.52 2 12 2zm0 3c1.66 0 3 1.34 3 3s-1.34 3-3 3-3-1.34-3-3 1.34-3 3-3zm0 14.2c-2.5 0-4.71-1.28-6-3.22.03-1.99 4-3.08 6-3.08 1.99 0 5.97 1.09 6 3.08-1.29 1.94-3.5 3.22-6 3.22z" />
-                            </svg>
-                          )}
-                        </div>
-                        <div>
-                          <div className="font-medium text-white">
-                            {user.username || "username"}
-                          </div>
-                          <div className="text-purple-100 text-sm">
-                            {user.fullName || user.name || user.username}
-                          </div>
-                        </div>
-                      </div>
-                    </div>
-                  ))}
-                </div>
-              )}
-            </div>
-          )}
+          </div>
         </div>
-      </div>
+      )}
 
-      {/* Action buttons - completely outside and below the main widget */}
+      {/* Action buttons - add shadows back */}
       {selectedUser && (
         <div className="w-full max-w-md -mt-4 grid grid-cols-3 gap-3">
           <button
