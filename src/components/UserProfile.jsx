@@ -10,7 +10,6 @@ import {
   getDoc,
 } from "firebase/firestore";
 import { db } from "../firebase";
-import "./UserProfile.css"; // Import the CSS file
 
 const UserProfile = () => {
   const { username } = useParams(); // Use username from URL
@@ -189,6 +188,18 @@ const UserProfile = () => {
     document.documentElement.style.backgroundColor = "#f2e8d5";
     document.body.style.backgroundColor = "#f2e8d5";
 
+    // Load fonts programmatically
+    const libreBaskerville = document.createElement("link");
+    libreBaskerville.rel = "stylesheet";
+    libreBaskerville.href =
+      "https://fonts.googleapis.com/css2?family=Libre+Baskerville:wght@400;700&display=swap";
+    document.head.appendChild(libreBaskerville);
+
+    const sfPro = document.createElement("link");
+    sfPro.rel = "stylesheet";
+    sfPro.href = "https://fonts.cdnfonts.com/css/sf-pro-display";
+    document.head.appendChild(sfPro);
+
     // This technique prevents the black overscroll in iOS Safari
     const meta = document.createElement("meta");
     meta.name = "theme-color";
@@ -198,6 +209,12 @@ const UserProfile = () => {
     return () => {
       if (meta.parentNode) {
         document.head.removeChild(meta);
+      }
+      if (libreBaskerville.parentNode) {
+        document.head.removeChild(libreBaskerville);
+      }
+      if (sfPro.parentNode) {
+        document.head.removeChild(sfPro);
       }
     };
   }, []);
@@ -246,24 +263,33 @@ const UserProfile = () => {
       borderRadius: "16px",
       padding: "12px",
       marginBottom: "20px",
-      height: "140px",
+      height: "170px",
       cursor: "pointer",
       transition: "transform 0.2s ease",
       display: "flex",
       flexDirection: "column",
     };
 
+    // Add hover style
+    const handleMouseOver = (e) => {
+      e.currentTarget.style.transform = "scale(1.02)";
+    };
+
+    const handleMouseOut = (e) => {
+      e.currentTarget.style.transform = "scale(1)";
+    };
+
     // Create appropriate grid style based on widget type
     const gridStyle = {
       display: "grid",
-      gridTemplateColumns: isSquareGrid
-        ? "repeat(2, 1fr)" // 2x2 grid for Music/Podcasts
-        : "repeat(4, 1fr)", // 4 horizontal items for TV/Books
+      gridTemplateColumns: isSquareGrid ? "repeat(2, 60px)" : "repeat(4, 70px)",
       gridTemplateRows: isSquareGrid ? "repeat(2, 1fr)" : "1fr",
-      gap: isSquareGrid ? "6px" : "10px",
+      columnGap: "0px",
+      rowGap: isSquareGrid ? "3px" : "4px",
       flex: "1",
       overflow: "hidden",
-      marginTop: isSquareGrid ? "8px" : "5px",
+      marginTop: isSquareGrid ? "2px" : "5px",
+      justifyContent: "center", // Centers the grid columns horizontally
     };
 
     // Limit entries to display
@@ -283,18 +309,24 @@ const UserProfile = () => {
         className="category-widget"
         onClick={handleCategoryClick}
         style={widgetStyle}
+        onMouseOver={handleMouseOver}
+        onMouseOut={handleMouseOut}
       >
         <h2
-          className="category-title"
           style={{
-            fontSize: "24px",
-            marginBottom: isSquareGrid ? "2px" : "6px",
+            color: "white",
+            fontSize: "20px",
+            marginBottom: isSquareGrid ? "0px" : "0px",
             marginTop: "0",
+            fontFamily: "'Libre Baskerville', serif",
+            fontWeight: "bold",
+            letterSpacing: "0.03em",
+            textRendering: "optimizeLegibility",
           }}
         >
           {title}
         </h2>
-        <div className="image-grid" style={gridStyle}>
+        <div style={gridStyle}>
           {completedEntries.length > 0
             ? completedEntries.slice(0, displayLimit).map((entry) => (
                 <div
@@ -305,17 +337,16 @@ const UserProfile = () => {
                     display: "flex",
                     justifyContent: "center",
                     alignItems: "center",
-                    padding: isSquareGrid ? "0" : "3px",
+                    padding: isSquareGrid ? "0" : "0px",
                   }}
                 >
                   {entry.thumbnailUrl && (
                     <img
                       src={entry.thumbnailUrl}
                       alt={entry.title}
-                      className="entry-image"
                       style={{
-                        width: isSquareGrid ? "55px" : "65px",
-                        height: isSquareGrid ? "55px" : "95px",
+                        width: isSquareGrid ? "50px" : "53px",
+                        height: isSquareGrid ? "50px" : "80px",
                         aspectRatio: isSquareGrid ? "1/1" : "2/3",
                         objectFit: "cover",
                         borderRadius: "8px",
@@ -332,7 +363,6 @@ const UserProfile = () => {
 
   return (
     <div
-      className="profile-container"
       style={{
         margin: "0 auto",
         maxWidth: "800px",
@@ -340,6 +370,7 @@ const UserProfile = () => {
         paddingBottom: "180px",
         minHeight: "100vh",
         backgroundColor: "#f2e8d5",
+        fontFamily: "'Libre Baskerville', serif",
       }}
     >
       {status ? (
@@ -353,7 +384,7 @@ const UserProfile = () => {
                 style={{
                   display: "flex",
                   alignItems: "center",
-                  gap: "20px" /* ADJUST THIS VALUE to control spacing between avatar and username */,
+                  gap: "20px",
                   marginBottom: "30px",
                   width: "100%",
                 }}
@@ -386,8 +417,8 @@ const UserProfile = () => {
                       fontFamily: "'Libre Baskerville', serif",
                       fontWeight: 700,
                       letterSpacing: "0.02em",
-                      whiteSpace:
-                        "nowrap" /* Prevents username from wrapping */,
+                      whiteSpace: "nowrap",
+                      textRendering: "optimizeLegibility",
                     }}
                   >
                     {user.username}
@@ -404,7 +435,7 @@ const UserProfile = () => {
                   style={{
                     display: "flex",
                     gap: "15px",
-                    marginBottom: "0", // Remove extra margin since widgets have their own
+                    marginBottom: "0",
                   }}
                 >
                   {/* Music on left - half width */}
@@ -464,27 +495,29 @@ const UserProfile = () => {
             }}
           >
             <button
-              className="download-button" // Add this class to use our CSS
               style={{
                 backgroundColor: "white",
                 color: "#111",
                 border: "none",
-                borderRadius: "20px", // Reduced from 25px
-                padding: "10px 20px", // Reduced from 12px 30px
-                fontSize: "18px", // Reduced from 25px
+                borderRadius: "20px",
+                padding: "10px 20px",
+                fontSize: "18px",
                 cursor: "pointer",
                 boxShadow: "0 4px 20px rgba(0,0,0,0.25)",
                 display: "flex",
                 alignItems: "center",
                 justifyContent: "center",
-                gap: "6px", // Reduced from 8px
+                gap: "6px",
+                fontFamily:
+                  "'SF Pro Display', 'SF Pro Text', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Oxygen, Ubuntu, Cantarell, 'Open Sans', 'Helvetica Neue', sans-serif",
+                fontWeight: 500,
               }}
             >
               <img
                 src="/apple-logo.svg"
                 alt="Apple logo"
                 style={{
-                  height: "16px", // Reduced from 22px
+                  height: "16px",
                 }}
               />
               {buttonText}
