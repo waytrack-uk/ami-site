@@ -13,19 +13,19 @@ const CategoryPage = () => {
   const [userId, setUserId] = useState(null);
   const [userData, setUserData] = useState(null);
 
-  // Function to get gradient based on category name
-  const getGradientStyle = (category) => {
+  // Function to get solid color based on category name - replacing gradient function
+  const getCategoryColor = (category) => {
     switch (category.toLowerCase()) {
       case "books":
-        return "linear-gradient(to bottom right, rgba(209, 166, 115, 1), rgba(184, 133, 89, 1), rgba(158, 107, 64, 1))";
+        return "rgba(184, 133, 89, 1)"; // Average brown color
       case "tv":
-        return "linear-gradient(to bottom right, rgba(20, 102, 122, 1), rgba(15, 71, 92, 1), rgba(10, 43, 61, 1))";
+        return "rgba(15, 71, 92, 1)"; // Average blue color
       case "music":
-        return "linear-gradient(to bottom right, rgba(255, 89, 102, 1), rgba(217, 64, 77, 1), rgba(179, 38, 51, 1))";
+        return "rgba(217, 64, 77, 1)"; // Average red color
       case "podcasts":
-        return "linear-gradient(to bottom right, rgba(204, 115, 242, 1), rgba(166, 77, 204, 1), rgba(128, 38, 166, 1))";
+        return "rgba(166, 77, 204, 1)"; // Average purple color
       default:
-        return "linear-gradient(to bottom right, #333, #222, #111)";
+        return "rgba(34, 34, 34, 1)"; // Default dark color
     }
   };
 
@@ -211,69 +211,43 @@ const CategoryPage = () => {
     fetchCategoryEntries();
   }, [categoryName, userId]);
 
-  // Apply gradient to the entire body when component mounts
+  // Get the solid color for this category - Replace the gradient variable
+  const backgroundColor = getCategoryColor(categoryName);
+
+  // No need to extract primary color anymore since we're using solid colors
+  // Update this effect to properly clean up when component unmounts
   useEffect(() => {
-    // Get the gradient for this category
-    const gradientBackground = getGradientStyle(categoryName);
+    // Store the original theme color to restore on unmount
+    const originalThemeColor = "#f2e8d5"; // Beige color from UserProfile
 
-    // Force all relevant elements to use our gradient
-    document.documentElement.style.backgroundColor = "transparent";
-    document.documentElement.style.background = gradientBackground;
+    // Set theme-color meta tag for areas outside viewport
+    let metaThemeColor = document.querySelector('meta[name="theme-color"]');
+    if (!metaThemeColor) {
+      metaThemeColor = document.createElement("meta");
+      metaThemeColor.name = "theme-color";
+      document.head.appendChild(metaThemeColor);
+    }
+    metaThemeColor.content = backgroundColor;
 
-    document.body.style.backgroundColor = "transparent";
-    document.body.style.background = gradientBackground;
-    document.body.style.backgroundAttachment = "fixed";
-
-    // Find and remove any beige background that might be persisting
-    const allElements = document.querySelectorAll("*");
-    allElements.forEach((el) => {
-      const style = window.getComputedStyle(el);
-      if (
-        style.backgroundColor === "rgb(242, 232, 213)" ||
-        style.backgroundColor === "#f2e8d5"
-      ) {
-        el.style.backgroundColor = "transparent";
-      }
-    });
-
-    // Add some debugging to identify potential conflicts
-    console.log("Applied gradient:", gradientBackground);
-    console.log(
-      "Current documentElement background:",
-      window.getComputedStyle(document.documentElement).background
-    );
-    console.log(
-      "Current body background:",
-      window.getComputedStyle(document.body).background
-    );
-
-    // Add !important to make sure our styles take precedence
-    const styleEl = document.createElement("style");
-    styleEl.innerHTML = `
-      html, body {
-        background: ${gradientBackground} !important;
-        background-attachment: fixed !important;
-      }
-    `;
-    document.head.appendChild(styleEl);
-
-    // Cleanup function
+    // Cleanup - reset to the beige color when navigating away
     return () => {
-      document.documentElement.style.background = "";
-      document.documentElement.style.backgroundColor = "";
-      document.body.style.background = "";
-      document.body.style.backgroundColor = "";
-      if (styleEl.parentNode) {
-        document.head.removeChild(styleEl);
+      // Reset to beige color from UserProfile page
+      if (metaThemeColor) {
+        metaThemeColor.content = originalThemeColor;
       }
     };
-  }, [categoryName]);
+  }, [categoryName, backgroundColor]);
 
-  // Group entries by month
+  // Group entries by month - exclude artist entries for music category
   const groupEntriesByMonth = (entries) => {
     const grouped = {};
 
-    entries.forEach((entry) => {
+    const filteredEntries =
+      categoryName.toLowerCase() === "music"
+        ? entries.filter((entry) => entry.format !== "artist")
+        : entries;
+
+    filteredEntries.forEach((entry) => {
       let monthYear = "Unknown Date";
 
       if (entry.createdAt) {
@@ -372,9 +346,16 @@ const CategoryPage = () => {
   // Check if we have any favorites to display
   const hasFavorites = favoriteEntries.length > 0;
 
-  // Add this near the top of your component, inside the function but before the return
+  // Get artist entries (entries where format is 'artist' - for music category)
+  const artistEntries = entries.filter((entry) => entry.format === "artist");
+
+  // Check if we have any artists to display and if this is the music category
+  const hasArtists =
+    artistEntries.length > 0 && categoryName.toLowerCase() === "music";
+
+  // Add CSS for artists gallery similar to favorites gallery
   useEffect(() => {
-    // Create a stylesheet to override any constraints for our gallery
+    // Create a stylesheet to override any constraints for our galleries
     const styleSheet = document.createElement("style");
     styleSheet.textContent = `
       .hide-scrollbar::-webkit-scrollbar {
@@ -384,12 +365,12 @@ const CategoryPage = () => {
         -ms-overflow-style: none;
         scrollbar-width: none;
       }
-      .favorites-gallery-container {
+      .gallery-container {
         margin: 0 -20px; /* Compensate for parent padding */
         width: calc(100% + 40px); /* Full width plus the margins */
         overflow-x: auto;
       }
-      .favorites-wrapper {
+      .gallery-wrapper {
         padding-left: 20px; /* Add padding back on the left */
         padding-right: 5px; /* Reduced padding on right to show scrolling */
         display: flex;
@@ -404,374 +385,490 @@ const CategoryPage = () => {
   }, []);
 
   return (
-    <div
-      className="font-serif"
-      style={{
-        margin: "0 auto",
-        maxWidth: "100%",
-        padding: "0",
-        color: "white",
-        minHeight: "100vh",
-        background: "transparent",
-        position: "relative",
-      }}
-    >
-      {/* Back button - top left as in screenshot */}
+    <>
+      {/* Top safe area - fixed height, solid color */}
       <div
         style={{
-          position: "absolute",
-          top: "16px",
-          left: "15px",
-          zIndex: "2",
+          position: "fixed",
+          top: 0,
+          left: 0,
+          right: 0,
+          height: "env(safe-area-inset-top, 0px)",
+          backgroundColor: backgroundColor, // Use solid color
+          zIndex: 999,
+        }}
+      />
+
+      {/* Main content area with solid background */}
+      <div
+        className="font-serif"
+        style={{
+          margin: "0 auto",
+          maxWidth: "100%",
+          padding: "0",
+          color: "white",
+          minHeight: "100vh",
+          background: backgroundColor, // Use solid color instead of gradient
+          position: "relative",
+          // Ensure content starts after the top safe area
+          paddingTop: "env(safe-area-inset-top, 0px)",
         }}
       >
-        <Link
-          to={username ? `/${username}` : "/"}
+        {/* Back button - top left as in screenshot */}
+        <div
           style={{
-            color: "white",
-            textDecoration: "none",
-            display: "block",
-            padding: "10px",
+            position: "absolute",
+            top: "16px", // This is now relative to the paddingTop
+            left: "15px",
+            zIndex: "2",
           }}
         >
-          <svg
-            width="12"
-            height="21"
-            viewBox="0 0 12 21"
-            fill="none"
-            xmlns="http://www.w3.org/2000/svg"
+          <Link
+            to={username ? `/${username}` : "/"}
+            style={{
+              color: "white",
+              textDecoration: "none",
+              display: "block",
+              padding: "10px",
+            }}
           >
-            <path
-              d="M10 2L2 10.5L10 19"
-              stroke="white"
-              strokeWidth="3"
-              strokeLinecap="round"
-              strokeLinejoin="round"
-            />
-          </svg>
-        </Link>
-      </div>
+            <svg
+              width="12"
+              height="21"
+              viewBox="0 0 12 21"
+              fill="none"
+              xmlns="http://www.w3.org/2000/svg"
+            >
+              <path
+                d="M10 2L2 10.5L10 19"
+                stroke="white"
+                strokeWidth="2"
+                strokeLinecap="round"
+                strokeLinejoin="round"
+              />
+            </svg>
+          </Link>
+        </div>
 
-      {/* Main content area with proper padding */}
-      <div
-        style={{
-          paddingTop: "50px",
-          paddingLeft: "20px",
-          paddingRight: "20px",
-          paddingBottom: "100px", // Add extra padding at bottom of content
-        }}
-      >
-        {/* Category title - smaller as per screenshot */}
-        <h1
+        {/* Main content area with proper padding */}
+        <div
           style={{
-            fontSize: "36px",
-            fontWeight: "bold",
-            fontFamily: "Baskerville, serif",
-            color: "white",
-            margin: "10px 0 20px 0",
+            paddingTop: "65px", // Increased from 50px to give more space below back button
+            paddingLeft: "20px",
+            paddingRight: "20px",
+            paddingBottom: "100px", // Add extra padding at bottom of content
           }}
         >
-          {formatCategoryName(categoryName)}
-        </h1>
+          {/* Category title - smaller as per screenshot */}
+          <h1
+            style={{
+              fontSize: "36px",
+              fontWeight: "bold",
+              fontFamily: "Baskerville, serif",
+              color: "white",
+              margin: "20px 0 20px 0", // Increased top margin from 10px to 20px
+            }}
+          >
+            {formatCategoryName(categoryName)}
+          </h1>
 
-        {loading ? (
-          <p>Loading {categoryName} entries...</p>
-        ) : entries.length === 0 ? (
-          <p>No {categoryName} entries found.</p>
-        ) : (
-          <div>
-            {/* Favorites Section - Only show if there are 5-star ratings */}
-            {hasFavorites && (
-              <div style={{ marginBottom: "30px" }}>
-                <h2
-                  style={{
-                    fontSize: "28px",
-                    fontWeight: "bold",
-                    fontFamily: "Baskerville, serif",
-                    color: "white",
-                    margin: "20px 0 5px 0",
-                  }}
-                >
-                  Favourites
-                </h2>
+          {loading ? (
+            <p>Loading {categoryName} entries...</p>
+          ) : entries.length === 0 ? (
+            <p>No {categoryName} entries found.</p>
+          ) : (
+            <div>
+              {/* Favorites Section - Only show if there are 5-star ratings */}
+              {hasFavorites && (
+                <div style={{ marginBottom: "30px" }}>
+                  <h2
+                    style={{
+                      fontSize: "20px",
+                      fontWeight: "bold",
+                      fontFamily: "Baskerville, serif",
+                      color: "white",
+                      margin: "20px 0 5px 0",
+                    }}
+                  >
+                    Favourites
+                  </h2>
 
-                <p
-                  style={{
-                    fontSize: "14px",
-                    opacity: "0.8",
-                    color: "white",
-                    fontFamily:
-                      "-apple-system, BlinkMacSystemFont, 'SF Pro Text', 'Segoe UI', Roboto, Helvetica, Arial, sans-serif",
-                    margin: "0 0 15px 0",
-                  }}
-                >
-                  Archives with a 5-star rating
-                </p>
+                  <p
+                    style={{
+                      fontSize: "12px",
+                      opacity: "0.8",
+                      color: "white",
+                      fontFamily:
+                        "-apple-system, BlinkMacSystemFont, 'SF Pro Text', 'Segoe UI', Roboto, Helvetica, Arial, sans-serif",
+                      margin: "0 0 15px 0",
+                    }}
+                  >
+                    Archives with a 5-star rating
+                  </p>
 
-                {/* Horizontal scrolling gallery with custom class */}
-                <div className="favorites-gallery-container hide-scrollbar">
-                  <div className="favorites-wrapper">
-                    {favoriteEntries.map((entry) => (
-                      <div
-                        key={`favorite-gallery-${entry.id}`}
-                        style={{
-                          position: "relative",
-                          minWidth: "160px",
-                          height: "220px",
-                          borderRadius: "8px",
-                          overflow: "hidden",
-                          flexShrink: 0,
-                        }}
-                      >
-                        {/* Background image */}
+                  {/* Horizontal scrolling gallery with custom class */}
+                  <div className="gallery-container hide-scrollbar">
+                    <div className="gallery-wrapper">
+                      {favoriteEntries.map((entry) => (
                         <div
+                          key={`favorite-gallery-${entry.id}`}
                           style={{
-                            position: "absolute",
-                            width: "100%",
-                            height: "100%",
-                            backgroundImage: entry.thumbnailUrl
-                              ? `url(${entry.thumbnailUrl})`
-                              : "none",
-                            backgroundSize: "cover",
-                            backgroundPosition: "center",
-                            backgroundColor: entry.thumbnailUrl
-                              ? "transparent"
-                              : "rgba(255, 255, 255, 0.2)",
-                          }}
-                        />
-
-                        {/* Gradient overlay for text visibility */}
-                        <div
-                          style={{
-                            position: "absolute",
-                            bottom: 0,
-                            left: 0,
-                            right: 0,
-                            height: "33%",
-                            background:
-                              "linear-gradient(to top, rgba(0,0,0,0.8) 0%, rgba(0,0,0,0.4) 80%, rgba(0,0,0,0) 100%)",
-                            zIndex: 1,
-                          }}
-                        />
-
-                        {/* Text overlay */}
-                        <div
-                          style={{
-                            position: "absolute",
-                            bottom: 0,
-                            left: 0,
-                            right: 0,
-                            padding: "10px",
-                            zIndex: 2,
+                            position: "relative",
+                            minWidth: "160px",
+                            height: "220px",
+                            borderRadius: "8px",
+                            overflow: "hidden",
+                            flexShrink: 0,
                           }}
                         >
+                          {/* Background image */}
+                          <div
+                            style={{
+                              position: "absolute",
+                              width: "100%",
+                              height: "100%",
+                              backgroundImage: entry.thumbnailUrl
+                                ? `url(${entry.thumbnailUrl})`
+                                : "none",
+                              backgroundSize: "cover",
+                              backgroundPosition: "center",
+                              backgroundColor: entry.thumbnailUrl
+                                ? "transparent"
+                                : "rgba(255, 255, 255, 0.2)",
+                            }}
+                          />
+
+                          {/* Gradient overlay for text visibility */}
+                          <div
+                            style={{
+                              position: "absolute",
+                              bottom: 0,
+                              left: 0,
+                              right: 0,
+                              height: "33%",
+                              background:
+                                "linear-gradient(to top, rgba(0,0,0,0.8) 0%, rgba(0,0,0,0.4) 80%, rgba(0,0,0,0) 100%)",
+                              zIndex: 1,
+                            }}
+                          />
+
+                          {/* Text overlay */}
+                          <div
+                            style={{
+                              position: "absolute",
+                              bottom: 0,
+                              left: 0,
+                              right: 0,
+                              padding: "10px",
+                              zIndex: 2,
+                            }}
+                          >
+                            <h4
+                              style={{
+                                fontSize: "14px",
+                                margin: "0 0 1px 0",
+                                fontFamily:
+                                  "-apple-system, BlinkMacSystemFont, 'SF Pro Text', 'Segoe UI', Roboto, Helvetica, Arial, sans-serif",
+                                fontWeight: "500",
+                                color: "white",
+                                textShadow: "0px 1px 2px rgba(0,0,0,0.5)",
+                                lineHeight: "1.2",
+                              }}
+                            >
+                              {entry.title || "Untitled Entry"}
+                            </h4>
+
+                            <p
+                              style={{
+                                fontSize: "12px",
+                                margin: "0",
+                                fontFamily:
+                                  "-apple-system, BlinkMacSystemFont, 'SF Pro Text', 'Segoe UI', Roboto, Helvetica, Arial, sans-serif",
+                                color: "white",
+                                opacity: "0.9",
+                                textShadow: "0px 1px 2px rgba(0,0,0,0.5)",
+                                lineHeight: "1.2",
+                              }}
+                            >
+                              {entry.creator || "Unknown Creator"}
+                            </p>
+                          </div>
+                        </div>
+                      ))}
+                    </div>
+                  </div>
+                </div>
+              )}
+
+              {/* Artists Section - Only show for music category if there are artist entries */}
+              {hasArtists && (
+                <div style={{ marginBottom: "30px" }}>
+                  <h2
+                    style={{
+                      fontSize: "20px",
+                      fontWeight: "bold",
+                      fontFamily: "Baskerville, serif",
+                      color: "white",
+                      margin: "20px 0 7px 0",
+                    }}
+                  >
+                    Artists
+                  </h2>
+
+                  {/* Horizontal scrolling gallery for artists */}
+                  <div className="gallery-container hide-scrollbar">
+                    <div className="gallery-wrapper">
+                      {artistEntries.map((entry) => (
+                        <div
+                          key={`artist-gallery-${entry.id}`}
+                          style={{
+                            minWidth: "140px",
+                            display: "flex",
+                            flexDirection: "column",
+                            alignItems: "center",
+                            flexShrink: 0,
+                            padding: "5px 0", // Minimal vertical padding
+                          }}
+                        >
+                          {/* Circular artist image - simple implementation */}
+                          <img
+                            src={entry.thumbnailUrl || ""}
+                            alt={entry.title || "Artist"}
+                            style={{
+                              width: "130px",
+                              height: "130px",
+                              borderRadius: "50%", // Perfect circle
+                              objectFit: "cover", // Maintains aspect ratio while filling
+                              objectPosition: "center", // Centers the image
+                              marginBottom: "4px", // Small gap between image and text
+                            }}
+                            onError={(e) => {
+                              // Fallback for missing images
+                              e.target.onerror = null;
+                              e.target.style.backgroundColor =
+                                "rgba(255, 255, 255, 0.2)";
+                            }}
+                          />
+
+                          {/* Simple text below the image */}
                           <h4
                             style={{
-                              fontSize: "14px",
-                              margin: "0 0 1px 0",
+                              fontSize: "15px",
+                              margin: "6px 0 1px 0",
+                              padding: "0 2px",
                               fontFamily:
                                 "-apple-system, BlinkMacSystemFont, 'SF Pro Text', 'Segoe UI', Roboto, Helvetica, Arial, sans-serif",
                               fontWeight: "500",
                               color: "white",
-                              textShadow: "0px 1px 2px rgba(0,0,0,0.5)",
                               lineHeight: "1.2",
+                              textAlign: "center",
+                              width: "100%",
                             }}
                           >
-                            {entry.title || "Untitled Entry"}
+                            {entry.title || "Untitled Artist"}
                           </h4>
 
-                          <p
-                            style={{
-                              fontSize: "12px",
-                              margin: "0",
-                              fontFamily:
-                                "-apple-system, BlinkMacSystemFont, 'SF Pro Text', 'Segoe UI', Roboto, Helvetica, Arial, sans-serif",
-                              color: "white",
-                              opacity: "0.9",
-                              textShadow: "0px 1px 2px rgba(0,0,0,0.5)",
-                              lineHeight: "1.2",
-                            }}
-                          >
-                            {entry.creator || "Unknown Creator"}
-                          </p>
+                          {entry.genre && (
+                            <p
+                              style={{
+                                fontSize: "12px",
+                                margin: "0",
+                                padding: "0 2px",
+                                fontFamily:
+                                  "-apple-system, BlinkMacSystemFont, 'SF Pro Text', 'Segoe UI', Roboto, Helvetica, Arial, sans-serif",
+                                color: "white",
+                                opacity: "0.8",
+                                textShadow: "0px 1px 2px rgba(0,0,0,0.5)",
+                                lineHeight: "1.2",
+                                textAlign: "center",
+                                width: "100%",
+                              }}
+                            >
+                              {entry.genre}
+                            </p>
+                          )}
                         </div>
+                      ))}
+                    </div>
+                  </div>
+                </div>
+              )}
+
+              {/* "Watched" or equivalent section title */}
+              <h2
+                style={{
+                  fontSize: "20px",
+                  fontWeight: "bold",
+                  fontFamily: "Baskerville, serif",
+                  color: "white",
+                  margin: "20px 0 10px 0",
+                }}
+              >
+                {getCompletedVerbForCategory(categoryName)}
+              </h2>
+
+              {/* Chronological entries by month - filter out artist entries for music category */}
+              {Object.keys(groupedEntries).map((monthYear) => (
+                <div key={monthYear} style={{ marginBottom: "25px" }}>
+                  {/* Month heading - smaller */}
+                  <h3
+                    style={{
+                      fontSize: "16px",
+                      color: "rgba(255, 255, 255, 0.8)",
+                      marginBottom: "6px",
+                      fontFamily: "Baskerville, serif",
+                      fontWeight: "bold",
+                    }}
+                  >
+                    {monthYear}
+                  </h3>
+
+                  {/* Full-width divider line below month heading */}
+                  <div
+                    style={{
+                      height: "1px",
+                      backgroundColor: "rgba(255, 255, 255, 0.15)",
+                      width: "100%",
+                      marginBottom: "2px", // Add space after the divider
+                    }}
+                  />
+
+                  {/* Entries list with divider lines */}
+                  <div>
+                    {groupedEntries[monthYear].map((entry, index) => (
+                      <div key={entry.id}>
+                        <div
+                          style={{
+                            display: "flex",
+                            alignItems: "center",
+                            paddingTop: "4px",
+                            paddingBottom: "4px",
+                            position: "relative",
+                          }}
+                        >
+                          {/* Thumbnail/Cover - smaller */}
+                          <div style={{ marginRight: "12px", flexShrink: 0 }}>
+                            {entry.thumbnailUrl ? (
+                              <img
+                                src={entry.thumbnailUrl}
+                                alt={entry.title || "Entry thumbnail"}
+                                style={{
+                                  width: "45px",
+                                  height: "45spx",
+                                  objectFit: "cover",
+                                  borderRadius: "4px",
+                                }}
+                              />
+                            ) : (
+                              <div
+                                style={{
+                                  width: "45px",
+                                  height: "45px",
+                                  backgroundColor: "rgba(255, 255, 255, 0.2)",
+                                  borderRadius: "4px",
+                                  display: "flex",
+                                  alignItems: "center",
+                                  justifyContent: "center",
+                                }}
+                              >
+                                <span style={{ fontSize: "16px" }}>?</span>
+                              </div>
+                            )}
+                          </div>
+
+                          {/* Entry Details - Title and Creator in SF Pro with rating next to creator */}
+                          <div style={{ flex: "1" }}>
+                            <h4
+                              style={{
+                                fontSize: "14px",
+                                margin: "0 0 0px 0",
+                                fontFamily:
+                                  "-apple-system, BlinkMacSystemFont, 'SF Pro Text', 'Segoe UI', Roboto, Helvetica, Arial, sans-serif",
+                                fontWeight: "normal",
+                              }}
+                            >
+                              {entry.title || "Untitled Entry"}
+                            </h4>
+
+                            <div
+                              style={{
+                                display: "flex",
+                                alignItems: "center",
+                                fontSize: "12px",
+                                margin: "0",
+                                opacity: "0.7",
+                                fontFamily:
+                                  "-apple-system, BlinkMacSystemFont, 'SF Pro Text', 'Segoe UI', Roboto, Helvetica, Arial, sans-serif",
+                              }}
+                            >
+                              {/* Creator name */}
+                              <span>{entry.creator || "Unknown Creator"}</span>
+
+                              {/* Star rating - right next to the creator with a spacing */}
+                              {formatRating(entry.rating) && (
+                                <span
+                                  style={{
+                                    marginLeft: "8px",
+                                    fontSize: "12px",
+                                    opacity: "1", // Make it a bit more visible
+                                    color: "white",
+                                    display: "flex",
+                                    alignItems: "center",
+                                  }}
+                                >
+                                  <span
+                                    style={{
+                                      marginRight: "2px",
+                                      fontSize: "11px",
+                                    }}
+                                  >
+                                    ★
+                                  </span>
+                                  {formatRating(entry.rating)}
+                                </span>
+                              )}
+                            </div>
+                          </div>
+
+                          {/* Remove the separate rating section */}
+                          <div style={{ marginLeft: "auto" }} />
+                        </div>
+
+                        {/* Add divider line after each entry except the last one - 
+                            padded on left to align with content after thumbnail */}
+                        {index < groupedEntries[monthYear].length - 1 && (
+                          <div
+                            style={{
+                              height: "1px",
+                              backgroundColor: "rgba(255, 255, 255, 0.15)",
+                              width: "calc(100% - 60px)", // Adjust width based on thumbnail (50px) + right margin (12px)
+                              marginLeft: "58px", // Equal to thumbnail width (50px) + right margin (12px)
+                            }}
+                          />
+                        )}
                       </div>
                     ))}
                   </div>
                 </div>
-              </div>
-            )}
-
-            {/* "Watched" or equivalent section title */}
-            <h2
-              style={{
-                fontSize: "28px",
-                fontWeight: "bold",
-                fontFamily: "Baskerville, serif",
-                color: "white",
-                margin: "20px 0 10px 0",
-              }}
-            >
-              {getCompletedVerbForCategory(categoryName)}
-            </h2>
-
-            {/* Chronological entries by month */}
-            {Object.keys(groupedEntries).map((monthYear) => (
-              <div key={monthYear} style={{ marginBottom: "30px" }}>
-                {/* Month heading - smaller */}
-                <h3
-                  style={{
-                    fontSize: "22px", // Reduced size
-                    color: "rgba(255, 255, 255, 0.8)",
-                    marginBottom: "15px", // Reduced margin
-                    fontFamily: "Baskerville, serif", // Keep month in Baskerville
-                    fontWeight: "normal",
-                  }}
-                >
-                  {monthYear}
-                </h3>
-
-                {/* Entries list with divider lines */}
-                <div>
-                  {groupedEntries[monthYear].map((entry, index) => (
-                    <div key={entry.id}>
-                      <div
-                        style={{
-                          display: "flex",
-                          alignItems: "center",
-                          paddingTop: "12px",
-                          paddingBottom: "12px",
-                          position: "relative",
-                        }}
-                      >
-                        {/* Thumbnail/Cover - smaller */}
-                        <div style={{ marginRight: "15px", flexShrink: 0 }}>
-                          {entry.thumbnailUrl ? (
-                            <img
-                              src={entry.thumbnailUrl}
-                              alt={entry.title || "Entry thumbnail"}
-                              style={{
-                                width: "60px", // Smaller
-                                height: "60px", // Smaller
-                                objectFit: "cover",
-                                borderRadius: "4px",
-                              }}
-                            />
-                          ) : (
-                            <div
-                              style={{
-                                width: "60px", // Smaller
-                                height: "60px", // Smaller
-                                backgroundColor: "rgba(255, 255, 255, 0.2)",
-                                borderRadius: "4px",
-                                display: "flex",
-                                alignItems: "center",
-                                justifyContent: "center",
-                              }}
-                            >
-                              <span style={{ fontSize: "20px" }}>?</span>
-                            </div>
-                          )}
-                        </div>
-
-                        {/* Entry Details - Title and Creator in SF Pro */}
-                        <div style={{ flex: "1" }}>
-                          <h4
-                            style={{
-                              fontSize: "17px", // Smaller
-                              margin: "0 0 3px 0",
-                              fontFamily:
-                                "-apple-system, BlinkMacSystemFont, 'SF Pro Text', 'Segoe UI', Roboto, Helvetica, Arial, sans-serif", // SF Pro
-                              fontWeight: "normal",
-                            }}
-                          >
-                            {entry.title || "Untitled Entry"}
-                          </h4>
-
-                          <p
-                            style={{
-                              fontSize: "15px", // Smaller
-                              margin: "0",
-                              opacity: "0.7", // More transparent
-                              fontFamily:
-                                "-apple-system, BlinkMacSystemFont, 'SF Pro Text', 'Segoe UI', Roboto, Helvetica, Arial, sans-serif", // SF Pro
-                              display: "flex",
-                              alignItems: "center",
-                            }}
-                          >
-                            {entry.creator || "Unknown Creator"}
-                          </p>
-                        </div>
-
-                        {/* Rating with star - right aligned */}
-                        <div
-                          style={{
-                            marginLeft: "auto",
-                            display: "flex",
-                            alignItems: "center",
-                            gap: "2px",
-                          }}
-                        >
-                          {formatRating(entry.rating) && (
-                            <span
-                              style={{
-                                fontSize: "15px", // Smaller
-                                opacity: "0.8",
-                                color: "white",
-                                fontFamily:
-                                  "-apple-system, BlinkMacSystemFont, 'SF Pro Text', 'Segoe UI', Roboto, Helvetica, Arial, sans-serif", // SF Pro
-                                display: "flex",
-                                alignItems: "center",
-                              }}
-                            >
-                              <span
-                                style={{
-                                  marginRight: "4px",
-                                  fontSize: "14px", // Smaller star
-                                }}
-                              >
-                                ★
-                              </span>
-                              {formatRating(entry.rating)}
-                            </span>
-                          )}
-
-                          {/* Three dots menu icon */}
-                          <span
-                            style={{
-                              marginLeft: "12px",
-                              fontSize: "16px", // Smaller
-                              letterSpacing: "1px",
-                              opacity: "0.6",
-                            }}
-                          >
-                            •••
-                          </span>
-                        </div>
-                      </div>
-
-                      {/* Add divider line after each entry except the last one */}
-                      {index < groupedEntries[monthYear].length - 1 && (
-                        <div
-                          style={{
-                            height: "1px",
-                            backgroundColor: "rgba(255, 255, 255, 0.15)", // Very faint white line
-                            width: "100%",
-                          }}
-                        />
-                      )}
-                    </div>
-                  ))}
-                </div>
-              </div>
-            ))}
-          </div>
-        )}
+              ))}
+            </div>
+          )}
+        </div>
       </div>
 
-      {/* Spacer div at bottom to ensure scrollability */}
-      <div style={{ height: "80px" }} />
-    </div>
+      {/* Bottom safe area - fixed height, solid color */}
+      <div
+        style={{
+          position: "fixed",
+          bottom: 0,
+          left: 0,
+          right: 0,
+          height: "env(safe-area-inset-bottom, 0px)",
+          backgroundColor: backgroundColor, // Use solid color
+          zIndex: 999,
+        }}
+      />
+    </>
   );
 };
 

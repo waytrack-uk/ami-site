@@ -306,7 +306,7 @@ const ArchivePage = () => {
             }}
           >
             Find your <br />
-            <span className="text-5xl md:text-8xl">Archive</span> link.
+            Archive link.
           </h1>
         </div>
       )}
