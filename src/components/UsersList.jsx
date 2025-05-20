@@ -434,7 +434,7 @@ const ArchivePage = () => {
       ) : (
         /* Selected user view with the colored widget and shadow restored */
         <div
-          className="w-full max-w-md text-white rounded-xl p-8 pb-4 shadow-lg relative"
+          className="w-full max-w-md text-white rounded-xl p-8 pb-4 shadow-lg relative mb-4"
           style={gradientStyle}
         >
           <div className="flex flex-col items-center">
