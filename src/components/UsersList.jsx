@@ -345,7 +345,8 @@ const ArchivePage = () => {
               <div className="absolute inset-y-0 right-0 flex items-center pr-4">
                 <button
                   onClick={handleClearSearch}
-                  className="w-5 h-5 bg-gray-400 rounded-full flex items-center justify-center text-white transition-colors"
+                  className="rounded-full flex items-center justify-center text-white transition-colors bg-gray-400"
+                  style={{ width: "1.125rem", height: "1.125rem" }}
                   aria-label="Clear search"
                 >
                   <svg
@@ -389,7 +390,7 @@ const ArchivePage = () => {
                     >
                       <div className="p-2">
                         <div className="flex items-center">
-                          <div className="w-8 h-8 rounded-full bg-gray-200 overflow-hidden flex items-center justify-center mr-2">
+                          <div className="w-8 h-8 rounded-full bg-gray-400 overflow-hidden flex items-center justify-center mr-2">
                             {user.avatarUrl ? (
                               <img
                                 src={user.avatarUrl}
@@ -400,8 +401,8 @@ const ArchivePage = () => {
                               <svg
                                 width="40"
                                 height="40"
-                                viewBox="0 0 24 24"
-                                fill="#d4d4d4"
+                                viewBox="2 2 20 20"
+                                fill="#e6e6e6"
                               >
                                 <path d="M12 2C6.48 2 2 6.48 2 12s4.48 10 10 10 10-4.48 10-10S17.52 2 12 2zm0 3c1.66 0 3 1.34 3 3s-1.34 3-3 3-3-1.34-3-3 1.34-3 3-3zm0 14.2c-2.5 0-4.71-1.28-6-3.22.03-1.99 4-3.08 6-3.08 1.99 0 5.97 1.09 6 3.08-1.29 1.94-3.5 3.22-6 3.22z" />
                               </svg>
