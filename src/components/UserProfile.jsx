@@ -301,8 +301,8 @@ const UserProfile = () => {
       display: "grid",
       gridTemplateColumns: isMobile
         ? isSquareGrid
-          ? "repeat(2, 60px)"
-          : "repeat(4, 70px)" // Mobile layout
+          ? "repeat(2, 65px)"
+          : "repeat(4, 75px)" // Mobile layout
         : isSquareGrid
         ? "repeat(7, 60px)"
         : "repeat(5, 70px)", // Desktop layout - larger & more columns
@@ -370,8 +370,8 @@ const UserProfile = () => {
                       src={entry.thumbnailUrl}
                       alt={entry.title}
                       style={{
-                        width: isSquareGrid ? "50px" : "53px",
-                        height: isSquareGrid ? "50px" : "80px",
+                        width: isSquareGrid ? "55px" : "65px",
+                        height: isSquareGrid ? "55px" : "95px",
                         aspectRatio: isSquareGrid ? "1/1" : "2/3",
                         objectFit: "cover",
                         borderRadius:
