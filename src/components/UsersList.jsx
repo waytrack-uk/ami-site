@@ -563,7 +563,7 @@ const ArchivePage = () => {
               <line x1="18" y1="6" x2="6" y2="18"></line>
               <line x1="6" y1="6" x2="18" y2="18"></line>
             </svg>
-            <span className="text-sm text-white font-medium">Close</span>
+            <span className="text-sm text-white font-medium">Back</span>
           </button>
         </div>
       )}

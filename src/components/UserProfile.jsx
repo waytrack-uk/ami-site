@@ -27,6 +27,7 @@ const UserProfile = () => {
   const [showDownloadButton, setShowDownloadButton] = useState(true);
   // Add state for button text to handle async loading
   const [buttonText, setButtonText] = useState("Join Archive");
+  const [isMobile, setIsMobile] = useState(window.innerWidth < 768);
 
   // Update button text when user data is available
   useEffect(() => {
@@ -219,6 +220,22 @@ const UserProfile = () => {
     };
   }, []);
 
+  // Add useEffect to handle responsive behavior
+  useEffect(() => {
+    const handleResize = () => {
+      setIsMobile(window.innerWidth < 768);
+    };
+
+    // Set initial value
+    handleResize();
+
+    // Add event listener
+    window.addEventListener("resize", handleResize);
+
+    // Clean up
+    return () => window.removeEventListener("resize", handleResize);
+  }, []);
+
   // Widget component to display a category of entries
   const CategoryWidget = ({ title, entries, compact = false }) => {
     // Function to navigate to category page with username
@@ -282,18 +299,26 @@ const UserProfile = () => {
     // Create appropriate grid style based on widget type
     const gridStyle = {
       display: "grid",
-      gridTemplateColumns: isSquareGrid ? "repeat(2, 60px)" : "repeat(4, 70px)",
+      gridTemplateColumns: isMobile
+        ? isSquareGrid
+          ? "repeat(2, 60px)"
+          : "repeat(4, 70px)" // Mobile layout
+        : isSquareGrid
+        ? "repeat(7, 60px)"
+        : "repeat(5, 70px)", // Desktop layout - larger & more columns
       gridTemplateRows: isSquareGrid ? "repeat(2, 1fr)" : "1fr",
       columnGap: "0px",
       rowGap: isSquareGrid ? "3px" : "4px",
       flex: "1",
       overflow: "hidden",
       marginTop: isSquareGrid ? "2px" : "5px",
-      justifyContent: "center", // Centers the grid columns horizontally
+      marginLeft: isMobile ? "0" : "18px",
+      // Only apply justifyContent center on mobile
+      justifyContent: isMobile ? "center" : "start",
     };
 
     // Limit entries to display
-    const displayLimit = 4; // Show 4 items for all widgets
+    const displayLimit = isMobile ? 4 : 20; // Show 4 items for all widgets
 
     // Filter for completed entries only (should already be filtered, but just to be sure)
     const completedEntries = entries.filter(
@@ -349,7 +374,13 @@ const UserProfile = () => {
                         height: isSquareGrid ? "50px" : "80px",
                         aspectRatio: isSquareGrid ? "1/1" : "2/3",
                         objectFit: "cover",
-                        borderRadius: "8px",
+                        borderRadius:
+                          (entry.format === "artist" &&
+                            title.toLowerCase() === "music") ||
+                          (entry.format === "show" &&
+                            title.toLowerCase() === "podcasts")
+                            ? "50%"
+                            : "8px",
                       }}
                     />
                   )}
@@ -362,66 +393,53 @@ const UserProfile = () => {
   };
 
   return (
-    <div
-      style={{
-        margin: "0 auto",
-        maxWidth: "800px",
-        padding: "20px",
-        paddingBottom: "180px",
-        minHeight: "100vh",
-        backgroundColor: "#f2e8d5",
-        fontFamily: "'Libre Baskerville', serif",
-      }}
-    >
+    <div className="mx-auto p-5 md:p-[100px] pb-[180px] min-h-screen bg-[#f2e8d5] font-['Libre_Baskerville',_serif]">
       {status ? (
         <p>{status}</p>
       ) : (
         <>
           {user && (
             <>
-              {/* Mobile-friendly flexbox layout with controllable gap */}
+              {/* Profile layout with avatar above and username below */}
               <div
                 style={{
                   display: "flex",
+                  flexDirection: "column",
                   alignItems: "center",
-                  gap: "20px",
+                  gap: "15px",
                   marginBottom: "30px",
+                  marginTop: "20px",
                   width: "100%",
+                  textAlign: "center",
                 }}
               >
-                {/* Avatar */}
-                <div style={{ flexShrink: 0 }}>
+                {/* Avatar - now above */}
+                <div>
                   <img
                     src={user.avatarUrl || "https://via.placeholder.com/60"}
                     alt={`${user.username}'s avatar`}
                     style={{
-                      width: "80px",
-                      height: "80px",
+                      width: "100px", // Increased size for better visibility
+                      height: "100px",
                       borderRadius: "50%",
                       objectFit: "cover",
                     }}
                   />
                 </div>
 
-                {/* Username with font styling */}
-                <div
-                  style={{
-                    flexGrow: 0,
-                    maxWidth: "fit-content",
-                  }}
-                >
+                {/* Username below */}
+                <div>
                   <h1
                     style={{
-                      fontSize: "32px",
+                      fontSize: "24px",
                       margin: "0",
                       fontFamily: "'Libre Baskerville', serif",
-                      fontWeight: 700,
+                      fontWeight: 1000,
                       letterSpacing: "0.02em",
-                      whiteSpace: "nowrap",
                       textRendering: "optimizeLegibility",
                     }}
                   >
-                    {user.username}
+                    @{user.username}
                   </h1>
                 </div>
               </div>

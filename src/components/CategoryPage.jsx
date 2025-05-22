@@ -12,6 +12,9 @@ const CategoryPage = () => {
   const [loading, setLoading] = useState(true);
   const [userId, setUserId] = useState(null);
   const [userData, setUserData] = useState(null);
+  const [isDesktop, setIsDesktop] = useState(false);
+  const [showDownloadButton, setShowDownloadButton] = useState(true);
+  const buttonText = "See more on Archive!";
 
   // Function to get solid color based on category name - replacing gradient function
   const getCategoryColor = (category) => {
@@ -220,6 +223,10 @@ const CategoryPage = () => {
     // Store the original theme color to restore on unmount
     const originalThemeColor = "#f2e8d5"; // Beige color from UserProfile
 
+    // Store original background colors to restore on unmount
+    const originalBodyBackground = document.body.style.background;
+    const originalHtmlBackground = document.documentElement.style.background;
+
     // Set theme-color meta tag for areas outside viewport
     let metaThemeColor = document.querySelector('meta[name="theme-color"]');
     if (!metaThemeColor) {
@@ -229,23 +236,39 @@ const CategoryPage = () => {
     }
     metaThemeColor.content = backgroundColor;
 
-    // Cleanup - reset to the beige color when navigating away
+    // Also set background color for html and body elements to handle desktop overscroll
+    document.body.style.background = backgroundColor;
+    document.documentElement.style.background = backgroundColor; // html element
+
+    // Cleanup - reset to the original colors when navigating away
     return () => {
-      // Reset to beige color from UserProfile page
+      // Reset theme color
       if (metaThemeColor) {
         metaThemeColor.content = originalThemeColor;
       }
+
+      // Reset body and html backgrounds
+      document.body.style.background = originalBodyBackground;
+      document.documentElement.style.background = originalHtmlBackground;
     };
   }, [categoryName, backgroundColor]);
 
-  // Group entries by month - exclude artist entries for music category
+  // Group entries by month - exclude artist entries for music category and show entries for podcasts category
   const groupEntriesByMonth = (entries) => {
     const grouped = {};
 
-    const filteredEntries =
-      categoryName.toLowerCase() === "music"
-        ? entries.filter((entry) => entry.format !== "artist")
-        : entries;
+    const filteredEntries = entries.filter((entry) => {
+      if (categoryName.toLowerCase() === "music" && entry.format === "artist") {
+        return false;
+      }
+      if (
+        categoryName.toLowerCase() === "podcasts" &&
+        entry.format === "show"
+      ) {
+        return false;
+      }
+      return true;
+    });
 
     filteredEntries.forEach((entry) => {
       let monthYear = "Unknown Date";
@@ -334,13 +357,29 @@ const CategoryPage = () => {
     }
   };
 
-  // Get favorites entries (entries with rating of 5)
+  // Get favorites entries (entries with rating of 5, excluding artists and shows)
   const favoriteEntries = entries.filter((entry) => {
     const rating =
       typeof entry.rating === "string"
         ? parseFloat(entry.rating)
         : entry.rating;
-    return rating === 5;
+
+    // First check if it's a 5-star rating
+    if (rating !== 5) {
+      return false;
+    }
+
+    // Then exclude artist entries for music category
+    if (categoryName.toLowerCase() === "music" && entry.format === "artist") {
+      return false;
+    }
+
+    // Also exclude show entries for podcasts category
+    if (categoryName.toLowerCase() === "podcasts" && entry.format === "show") {
+      return false;
+    }
+
+    return true;
   });
 
   // Check if we have any favorites to display
@@ -352,6 +391,13 @@ const CategoryPage = () => {
   // Check if we have any artists to display and if this is the music category
   const hasArtists =
     artistEntries.length > 0 && categoryName.toLowerCase() === "music";
+
+  // Get show entries (entries where format is 'show' - for podcasts category)
+  const showEntries = entries.filter((entry) => entry.format === "show");
+
+  // Check if we have any shows to display and if this is the podcasts category
+  const hasShows =
+    showEntries.length > 0 && categoryName.toLowerCase() === "podcasts";
 
   // Add CSS for artists gallery similar to favorites gallery
   useEffect(() => {
@@ -383,6 +429,36 @@ const CategoryPage = () => {
       document.head.removeChild(styleSheet);
     };
   }, []);
+
+  // Add an effect to detect screen width
+  useEffect(() => {
+    // Function to check if desktop width
+    const checkIfDesktop = () => {
+      setIsDesktop(window.innerWidth >= 768);
+    };
+
+    // Check immediately
+    checkIfDesktop();
+
+    // Add resize listener
+    window.addEventListener("resize", checkIfDesktop);
+
+    // Clean up
+    return () => window.removeEventListener("resize", checkIfDesktop);
+  }, []);
+
+  // Calculate content width and margins based on screen size
+  const contentStyle = {
+    paddingTop: "65px",
+    paddingLeft: "20px",
+    paddingRight: "20px",
+    paddingBottom: "100px",
+    ...(isDesktop && {
+      maxWidth: "1000px",
+      marginLeft: "auto",
+      marginRight: "auto",
+    }),
+  };
 
   return (
     <>
@@ -451,14 +527,7 @@ const CategoryPage = () => {
         </div>
 
         {/* Main content area with proper padding */}
-        <div
-          style={{
-            paddingTop: "65px", // Increased from 50px to give more space below back button
-            paddingLeft: "20px",
-            paddingRight: "20px",
-            paddingBottom: "100px", // Add extra padding at bottom of content
-          }}
-        >
+        <div style={contentStyle}>
           {/* Category title - smaller as per screenshot */}
           <h1
             style={{
@@ -595,6 +664,8 @@ const CategoryPage = () => {
                           </div>
                         </div>
                       ))}
+                      {/* Add an empty spacer div at the end */}
+                      <div style={{ minWidth: "20px", flexShrink: 0 }}></div>
                     </div>
                   </div>
                 </div>
@@ -689,6 +760,104 @@ const CategoryPage = () => {
                           )}
                         </div>
                       ))}
+                      {/* Add an empty spacer div at the end */}
+                      <div style={{ minWidth: "20px", flexShrink: 0 }}></div>
+                    </div>
+                  </div>
+                </div>
+              )}
+
+              {/* Shows Section - Only show for podcasts category if there are show entries */}
+              {hasShows && (
+                <div style={{ marginBottom: "30px" }}>
+                  <h2
+                    style={{
+                      fontSize: "20px",
+                      fontWeight: "bold",
+                      fontFamily: "Baskerville, serif",
+                      color: "white",
+                      margin: "20px 0 7px 0",
+                    }}
+                  >
+                    Shows
+                  </h2>
+
+                  {/* Horizontal scrolling gallery for shows */}
+                  <div className="gallery-container hide-scrollbar">
+                    <div className="gallery-wrapper">
+                      {showEntries.map((entry) => (
+                        <div
+                          key={`show-gallery-${entry.id}`}
+                          style={{
+                            minWidth: "140px",
+                            display: "flex",
+                            flexDirection: "column",
+                            alignItems: "center",
+                            flexShrink: 0,
+                            padding: "5px 0", // Minimal vertical padding
+                          }}
+                        >
+                          {/* Circular show image - similar to artist implementation */}
+                          <img
+                            src={entry.thumbnailUrl || ""}
+                            alt={entry.title || "Show"}
+                            style={{
+                              width: "130px",
+                              height: "130px",
+                              borderRadius: "50%", // Perfect circle
+                              objectFit: "cover", // Maintains aspect ratio while filling
+                              objectPosition: "center", // Centers the image
+                              marginBottom: "4px", // Small gap between image and text
+                            }}
+                            onError={(e) => {
+                              // Fallback for missing images
+                              e.target.onerror = null;
+                              e.target.style.backgroundColor =
+                                "rgba(255, 255, 255, 0.2)";
+                            }}
+                          />
+
+                          {/* Simple text below the image */}
+                          <h4
+                            style={{
+                              fontSize: "15px",
+                              margin: "6px 0 1px 0",
+                              padding: "0 2px",
+                              fontFamily:
+                                "-apple-system, BlinkMacSystemFont, 'SF Pro Text', 'Segoe UI', Roboto, Helvetica, Arial, sans-serif",
+                              fontWeight: "500",
+                              color: "white",
+                              lineHeight: "1.2",
+                              textAlign: "center",
+                              width: "100%",
+                            }}
+                          >
+                            {entry.title || "Untitled Show"}
+                          </h4>
+
+                          {entry.genre && (
+                            <p
+                              style={{
+                                fontSize: "12px",
+                                margin: "0",
+                                padding: "0 2px",
+                                fontFamily:
+                                  "-apple-system, BlinkMacSystemFont, 'SF Pro Text', 'Segoe UI', Roboto, Helvetica, Arial, sans-serif",
+                                color: "white",
+                                opacity: "0.8",
+                                textShadow: "0px 1px 2px rgba(0,0,0,0.5)",
+                                lineHeight: "1.2",
+                                textAlign: "center",
+                                width: "100%",
+                              }}
+                            >
+                              {entry.genre}
+                            </p>
+                          )}
+                        </div>
+                      ))}
+                      {/* Add an empty spacer div at the end */}
+                      <div style={{ minWidth: "20px", flexShrink: 0 }}></div>
                     </div>
                   </div>
                 </div>
@@ -855,6 +1024,62 @@ const CategoryPage = () => {
           )}
         </div>
       </div>
+
+      {/* Add download button fixed to bottom of screen */}
+      {showDownloadButton && (
+        <div
+          id="download-footer"
+          style={{
+            position: "fixed",
+            bottom: 12,
+            left: 0,
+            width: "100%",
+            padding: "15px 0",
+            textAlign: "center",
+            zIndex: 1000,
+            backgroundColor: "transparent",
+          }}
+        >
+          <a
+            href="https://apps.apple.com/gb/app/archive-be-curious/id6738609084"
+            target="_blank"
+            rel="noopener noreferrer"
+            style={{
+              textDecoration: "none",
+              display: "inline-block",
+            }}
+          >
+            <button
+              style={{
+                backgroundColor: "white",
+                color: "#111",
+                border: "none",
+                borderRadius: "20px",
+                padding: "10px 20px",
+                fontSize: "18px",
+                cursor: "pointer",
+                boxShadow: "0 4px 20px rgba(0,0,0,0.25)",
+                display: "flex",
+                alignItems: "center",
+                justifyContent: "center",
+                gap: "6px",
+                fontFamily:
+                  "'SF Pro Display', 'SF Pro Text', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Oxygen, Ubuntu, Cantarell, 'Open Sans', 'Helvetica Neue', sans-serif",
+                fontWeight: 500,
+              }}
+            >
+              <img
+                src="/apple-logo.svg"
+                alt="Apple logo"
+                style={{
+                  height: "16px",
+                }}
+              />
+              {buttonText}
+            </button>
+          </a>
+        </div>
+      )}
 
       {/* Bottom safe area - fixed height, solid color */}
       <div
