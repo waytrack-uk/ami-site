@@ -12,22 +12,25 @@ import {
 import { db } from "../firebase";
 
 const UserProfile = () => {
-  const { username } = useParams(); // Use username from URL
+  const { username } = useParams();
   const navigate = useNavigate();
   const [user, setUser] = useState(null);
   const [entries, setEntries] = useState([]);
-  const [status, setStatus] = useState("Loading...");
   const [categorizedEntries, setCategorizedEntries] = useState({
     tv: [],
     music: [],
     podcasts: [],
     books: [],
   });
-  // Add state for download button
   const [showDownloadButton, setShowDownloadButton] = useState(true);
-  // Add state for button text to handle async loading
   const [buttonText, setButtonText] = useState("Join Archive");
   const [isMobile, setIsMobile] = useState(window.innerWidth < 768);
+
+  // New state to track if we have basic data (to show widgets immediately)
+  const [hasBasicData, setHasBasicData] = useState(false);
+
+  // TESTING: Set to true to force loading state with placeholders
+  const FORCE_LOADING_STATE = false;
 
   // Update button text when user data is available
   useEffect(() => {
@@ -51,7 +54,6 @@ const UserProfile = () => {
         let foundUser = null;
         usersSnapshot.forEach((doc) => {
           const data = doc.data();
-          // Check all possible username fields and match case-insensitively
           if (
             (data.username &&
               data.username.toLowerCase() === username.toLowerCase()) ||
@@ -65,11 +67,23 @@ const UserProfile = () => {
         });
 
         if (!foundUser) {
-          setStatus("User not found");
           return;
         }
 
         setUser(foundUser);
+        // Show widgets immediately after user is found
+        setHasBasicData(true);
+
+        // TESTING: Skip data loading if in forced loading state
+        if (FORCE_LOADING_STATE) {
+          setCategorizedEntries({
+            tv: [],
+            music: [],
+            podcasts: [],
+            books: [],
+          });
+          return;
+        }
 
         // Fetch user's entries
         const entriesQuery = query(
@@ -80,8 +94,14 @@ const UserProfile = () => {
         const entriesSnapshot = await getDocs(entriesQuery);
 
         if (entriesSnapshot.empty) {
-          setStatus("");
           setEntries([]);
+          // Keep empty categorized entries for placeholder display
+          setCategorizedEntries({
+            tv: [],
+            music: [],
+            podcasts: [],
+            books: [],
+          });
           return;
         }
 
@@ -134,10 +154,8 @@ const UserProfile = () => {
         // Sort each category by date (newest first)
         Object.keys(categorized).forEach((category) => {
           categorized[category].sort((a, b) => {
-            // Try to use updatedAt, then fallback to createdAt
             let dateA, dateB;
 
-            // Try to get dateA
             if (a.updatedAt) {
               dateA = a.updatedAt.toDate
                 ? a.updatedAt.toDate()
@@ -150,7 +168,6 @@ const UserProfile = () => {
               dateA = new Date(0);
             }
 
-            // Try to get dateB
             if (b.updatedAt) {
               dateB = b.updatedAt.toDate
                 ? b.updatedAt.toDate()
@@ -168,10 +185,8 @@ const UserProfile = () => {
         });
 
         setCategorizedEntries(categorized);
-        setStatus("");
       } catch (error) {
         console.error("Error fetching data:", error);
-        setStatus("Error: " + error.message);
       }
     }
 
@@ -179,17 +194,14 @@ const UserProfile = () => {
       fetchUserAndEntries();
     }
 
-    // Ensure download button appears
     setShowDownloadButton(true);
   }, [username]);
 
-  // Add this inside the UserProfile component, next to your other useEffect hooks
+  // Background and font loading effects
   useEffect(() => {
-    // Force the background color on all possible elements
     document.documentElement.style.backgroundColor = "#f2e8d5";
     document.body.style.backgroundColor = "#f2e8d5";
 
-    // Load fonts programmatically
     const libreBaskerville = document.createElement("link");
     libreBaskerville.rel = "stylesheet";
     libreBaskerville.href =
@@ -201,7 +213,6 @@ const UserProfile = () => {
     sfPro.href = "https://fonts.cdnfonts.com/css/sf-pro-display";
     document.head.appendChild(sfPro);
 
-    // This technique prevents the black overscroll in iOS Safari
     const meta = document.createElement("meta");
     meta.name = "theme-color";
     meta.content = "#f2e8d5";
@@ -220,30 +231,66 @@ const UserProfile = () => {
     };
   }, []);
 
-  // Add useEffect to handle responsive behavior
   useEffect(() => {
     const handleResize = () => {
       setIsMobile(window.innerWidth < 768);
     };
 
-    // Set initial value
     handleResize();
-
-    // Add event listener
     window.addEventListener("resize", handleResize);
-
-    // Clean up
     return () => window.removeEventListener("resize", handleResize);
   }, []);
 
-  // Widget component to display a category of entries
+  // Placeholder component for loading thumbnails
+  const PlaceholderBox = ({ isSquare = false }) => (
+    <div
+      style={{
+        width: isSquare ? "55px" : "65px",
+        height: isSquare ? "55px" : "95px",
+        backgroundColor: "rgba(255, 255, 255, 0.3)", // Semi-transparent white
+        borderRadius: "8px",
+        animation: "pulse 1.5s ease-in-out infinite alternate",
+      }}
+    />
+  );
+
+  // First, let's create a ProfilePlaceholder component near the PlaceholderBox component
+  const ProfilePlaceholder = () => (
+    <div
+      style={{
+        width: "100px",
+        height: "100px",
+        backgroundColor: "rgba(255, 255, 255, 0.3)",
+        borderRadius: "50%",
+        animation: "pulse 1.5s ease-in-out infinite alternate",
+      }}
+    />
+  );
+
+  // Add CSS animation for pulse effect
+  useEffect(() => {
+    const style = document.createElement("style");
+    style.textContent = `
+      @keyframes pulse {
+        0% { opacity: 0.3; }
+        100% { opacity: 0.6; }
+      }
+    `;
+    document.head.appendChild(style);
+
+    return () => {
+      if (style.parentNode) {
+        document.head.removeChild(style);
+      }
+    };
+  }, []);
+
+  // Widget component with placeholder support
   const CategoryWidget = ({ title, entries, compact = false }) => {
-    // Function to navigate to category page with username
     const handleCategoryClick = () => {
       navigate(`/${user.username}/${title.toLowerCase()}`);
     };
 
-    // Function to get gradient based on category title
     const getGradientStyle = (title) => {
       switch (title.toLowerCase()) {
         case "books":
@@ -271,10 +318,8 @@ const UserProfile = () => {
       }
     };
 
-    // Determine if this is a square grid (Music/Podcasts) or horizontal layout (TV/Books)
     const isSquareGrid = compact;
 
-    // Set consistent heights for all widgets
     const widgetStyle = {
       ...getGradientStyle(title),
       borderRadius: "16px",
@@ -287,7 +332,6 @@ const UserProfile = () => {
       flexDirection: "column",
     };
 
-    // Add hover style
     const handleMouseOver = (e) => {
       e.currentTarget.style.transform = "scale(1.02)";
     };
@@ -296,31 +340,29 @@ const UserProfile = () => {
       e.currentTarget.style.transform = "scale(1)";
     };
 
-    // Create appropriate grid style based on widget type
     const gridStyle = {
       display: "grid",
       gridTemplateColumns: isMobile
         ? isSquareGrid
           ? "repeat(2, 65px)"
-          : "repeat(4, 75px)" // Mobile layout
+          : "repeat(4, 75px)"
         : isSquareGrid
         ? "repeat(7, 60px)"
-        : "repeat(5, 70px)", // Desktop layout - larger & more columns
+        : "repeat(13, 70px)",
       gridTemplateRows: isSquareGrid ? "repeat(2, 1fr)" : "1fr",
+      gridAutoRows: "1fr",
+      gridAutoFlow: isSquareGrid ? "row" : "column",
       columnGap: "0px",
       rowGap: isSquareGrid ? "3px" : "4px",
       flex: "1",
       overflow: "hidden",
       marginTop: isSquareGrid ? "2px" : "5px",
       marginLeft: isMobile ? "0" : "18px",
-      // Only apply justifyContent center on mobile
       justifyContent: isMobile ? "center" : "start",
     };
 
-    // Limit entries to display
-    const displayLimit = isMobile ? 4 : 20; // Show 4 items for all widgets
+    const displayLimit = isMobile ? 4 : 13;
 
-    // Filter for completed entries only (should already be filtered, but just to be sure)
     const completedEntries = entries.filter(
       (entry) =>
         entry.status === "completed" ||
@@ -328,6 +370,10 @@ const UserProfile = () => {
         entry.status === "" ||
         entry.status === null
     );
+
+    // Show placeholders if we have no entries yet but have basic data
+    const showPlaceholders = completedEntries.length === 0 && hasBasicData;
+    const placeholderCount = isMobile ? 4 : isSquareGrid ? 14 : 13;
 
     return (
       <div
@@ -352,7 +398,26 @@ const UserProfile = () => {
           {title}
         </h2>
         <div style={gridStyle}>
-          {completedEntries.length > 0
+          {showPlaceholders
+            ? // Show placeholder boxes while loading
+              Array(placeholderCount)
+                .fill(null)
+                .map((_, index) => (
+                  <div
+                    key={`placeholder-${index}`}
+                    style={{
+                      width: "100%",
+                      height: "100%",
+                      display: "flex",
+                      justifyContent: "center",
+                      alignItems: "center",
+                    }}
+                  >
+                    <PlaceholderBox isSquare={isSquareGrid} />
+                  </div>
+                ))
+            : // Show actual entries
+            completedEntries.length > 0
             ? completedEntries.slice(0, displayLimit).map((entry) => (
                 <div
                   key={entry.id}
@@ -394,100 +459,90 @@ const UserProfile = () => {
 
   return (
     <div className="mx-auto p-5 md:p-[100px] pb-[180px] min-h-screen bg-[#f2e8d5] font-['Libre_Baskerville',_serif]">
-      {status ? (
-        <p>{status}</p>
-      ) : (
+      {user && hasBasicData && (
         <>
-          {user && (
-            <>
-              {/* Profile layout with avatar above and username below */}
-              <div
+          {/* Profile layout with avatar above and username below */}
+          <div
+            style={{
+              display: "flex",
+              flexDirection: "column",
+              alignItems: "center",
+              gap: "15px",
+              marginBottom: "30px",
+              marginTop: "20px",
+              width: "100%",
+              textAlign: "center",
+            }}
+          >
+            <div>
+              {FORCE_LOADING_STATE || !user.avatarUrl ? (
+                <ProfilePlaceholder />
+              ) : (
+                <img
+                  src={user.avatarUrl}
+                  alt={`${user.username}'s avatar`}
+                  style={{
+                    width: "100px",
+                    height: "100px",
+                    borderRadius: "50%",
+                    objectFit: "cover",
+                  }}
+                />
+              )}
+            </div>
+
+            <div>
+              <h1
                 style={{
-                  display: "flex",
-                  flexDirection: "column",
-                  alignItems: "center",
-                  gap: "15px",
-                  marginBottom: "30px",
-                  marginTop: "20px",
-                  width: "100%",
-                  textAlign: "center",
+                  fontSize: "24px",
+                  margin: "0",
+                  fontFamily: "'Libre Baskerville', serif",
+                  fontWeight: 1000,
+                  letterSpacing: "0.02em",
+                  textRendering: "optimizeLegibility",
                 }}
               >
-                {/* Avatar - now above */}
-                <div>
-                  <img
-                    src={user.avatarUrl || "https://via.placeholder.com/60"}
-                    alt={`${user.username}'s avatar`}
-                    style={{
-                      width: "100px", // Increased size for better visibility
-                      height: "100px",
-                      borderRadius: "50%",
-                      objectFit: "cover",
-                    }}
-                  />
-                </div>
+                @{user.username}
+              </h1>
+            </div>
+          </div>
 
-                {/* Username below */}
-                <div>
-                  <h1
-                    style={{
-                      fontSize: "24px",
-                      margin: "0",
-                      fontFamily: "'Libre Baskerville', serif",
-                      fontWeight: 1000,
-                      letterSpacing: "0.02em",
-                      textRendering: "optimizeLegibility",
-                    }}
-                  >
-                    @{user.username}
-                  </h1>
-                </div>
-              </div>
+          <div style={{ marginTop: "30px" }}>
+            {/* TV at top - full width */}
+            <CategoryWidget title="TV" entries={categorizedEntries.tv} />
 
-              <div style={{ marginTop: "30px" }}>
-                {/* TV at top - full width */}
-                <CategoryWidget title="TV" entries={categorizedEntries.tv} />
-
-                {/* Music and Podcasts side by side */}
-                <div
-                  style={{
-                    display: "flex",
-                    gap: "15px",
-                    marginBottom: "0",
-                  }}
-                >
-                  {/* Music on left - half width */}
-                  <div style={{ flex: "1" }}>
-                    <CategoryWidget
-                      title="Music"
-                      entries={categorizedEntries.music}
-                      compact={true}
-                    />
-                  </div>
-
-                  {/* Podcasts on right - half width */}
-                  <div style={{ flex: "1" }}>
-                    <CategoryWidget
-                      title="Podcasts"
-                      entries={categorizedEntries.podcasts}
-                      compact={true}
-                    />
-                  </div>
-                </div>
-
-                {/* Books at bottom - full width */}
+            {/* Music and Podcasts side by side */}
+            <div
+              style={{
+                display: "flex",
+                gap: "15px",
+                marginBottom: "0",
+              }}
+            >
+              <div style={{ flex: "1" }}>
                 <CategoryWidget
-                  title="Books"
-                  entries={categorizedEntries.books}
+                  title="Music"
+                  entries={categorizedEntries.music}
+                  compact={true}
                 />
               </div>
-            </>
-          )}
+
+              <div style={{ flex: "1" }}>
+                <CategoryWidget
+                  title="Podcasts"
+                  entries={categorizedEntries.podcasts}
+                  compact={true}
+                />
+              </div>
+            </div>
+
+            {/* Books at bottom - full width */}
+            <CategoryWidget title="Books" entries={categorizedEntries.books} />
+          </div>
         </>
       )}
 
-      {/* Add a spacer div at the bottom */}
-      <div style={{ height: "80px" }} />
+      <div />
 
       {showDownloadButton && (
         <div

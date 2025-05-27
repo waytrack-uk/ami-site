@@ -289,6 +289,71 @@ const ArchivePage = () => {
     setIsTouching(false);
   };
 
+  // Add this near the top of the component with other state declarations
+  const PlaceholderBox = () => (
+    <div
+      style={{
+        width: "100%",
+        height: "100%",
+        backgroundColor: "rgba(255, 255, 255, 0.3)",
+        borderRadius: "50%",
+        animation: "pulse 1.5s ease-in-out infinite alternate",
+      }}
+    />
+  );
+
+  // Add this useEffect for the pulse animation
+  useEffect(() => {
+    const style = document.createElement("style");
+    style.textContent = `
+      @keyframes pulse {
+        0% { opacity: 0.3; }
+        100% { opacity: 0.6; }
+      }
+    `;
+    document.head.appendChild(style);
+
+    return () => {
+      if (style.parentNode) {
+        document.head.removeChild(style);
+      }
+    };
+  }, []);
+
+  // Simplify the UserAvatar component to just handle the display
+  const UserAvatar = ({ user, size = "small" }) => {
+    return (
+      <div
+        className={`${
+          size === "large" ? "w-36 h-36" : "w-8 h-8"
+        } rounded-full overflow-hidden flex items-center justify-center ${
+          size === "small"
+            ? "mr-2"
+            : "mb-6 shadow-md border-2 border-white border-opacity-50"
+        }`}
+      >
+        {user.avatarUrl ? (
+          <img
+            src={user.avatarUrl}
+            alt={user.username || "User"}
+            className="w-full h-full object-cover"
+          />
+        ) : (
+          <div className="w-full h-full bg-gray-400 flex items-center justify-center">
+            <svg
+              width={size === "large" ? "72" : "40"}
+              height={size === "large" ? "72" : "40"}
+              viewBox="2 2 20 20"
+              fill={size === "large" ? "#888" : "#e6e6e6"}
+            >
+              <path d="M12 2C6.48 2 2 6.48 2 12s4.48 10 10 10 10-4.48 10-10S17.52 2 12 2zm0 3c1.66 0 3 1.34 3 3s-1.34 3-3 3-3-1.34-3-3 1.34-3 3-3zm0 14.2c-2.5 0-4.71-1.28-6-3.22.03-1.99 4-3.08 6-3.08 1.99 0 5.97 1.09 6 3.08-1.29 1.94-3.5 3.22-6 3.22z" />
+            </svg>
+          </div>
+        )}
+      </div>
+    );
+  };
+
   return (
     <div
       className="min-h-screen w-full font-sans flex flex-col items-center pt-28 gap-4 px-4"
@@ -313,12 +378,12 @@ const ArchivePage = () => {
 
       {/* Search bar only, no colored widget */}
       {!selectedUser ? (
-        <div className="flex flex-col items-center w-full max-w-md">
-          <div className="relative w-full max-w-sm">
+        <div className="flex flex-col items-center w-full max-w-md md:max-w-[48rem]">
+          <div className="relative w-full max-w-sm md:max-w-[48rem]">
             <input
               type="text"
               placeholder="Type your username..."
-              className="w-full py-3 pl-12 pr-10 border border-gray-300 rounded-full bg-white focus:outline-none text-black"
+              className="w-full py-3 pl-12 pr-10 border border-gray-300 rounded-full bg-white focus:outline-none text-black md:shadow-md"
               value={searchTerm}
               onChange={handleSearchChange}
               ref={searchInputRef}
@@ -375,13 +440,13 @@ const ArchivePage = () => {
 
           {/* Users list section - no shadow */}
           {!status && hasSearched && (
-            <div className="w-full max-w-md mt-4">
+            <div className="w-full max-w-md mt-4 md:max-w-[48rem]">
               {filteredUsers.length === 0 ? (
                 <div className="text-center text-gray-700 mt-4">
                   No users found matching "{searchTerm}"
                 </div>
               ) : (
-                <div className="max-h-64 overflow-y-auto bg-white rounded-2xl pt-2 pb-2">
+                <div className="max-h-64 overflow-y-auto bg-white rounded-2xl pt-2 pb-2 md:shadow-md">
                   {filteredUsers.map((user, index) => (
                     <div
                       key={user.id}
@@ -390,24 +455,7 @@ const ArchivePage = () => {
                     >
                       <div className="p-2">
                         <div className="flex items-center">
-                          <div className="w-8 h-8 rounded-full bg-gray-400 overflow-hidden flex items-center justify-center mr-2">
-                            {user.avatarUrl ? (
-                              <img
-                                src={user.avatarUrl}
-                                alt={user.username || "User"}
-                                className="w-full h-full object-cover"
-                              />
-                            ) : (
-                              <svg
-                                width="40"
-                                height="40"
-                                viewBox="2 2 20 20"
-                                fill="#e6e6e6"
-                              >
-                                <path d="M12 2C6.48 2 2 6.48 2 12s4.48 10 10 10 10-4.48 10-10S17.52 2 12 2zm0 3c1.66 0 3 1.34 3 3s-1.34 3-3 3-3-1.34-3-3 1.34-3 3-3zm0 14.2c-2.5 0-4.71-1.28-6-3.22.03-1.99 4-3.08 6-3.08 1.99 0 5.97 1.09 6 3.08-1.29 1.94-3.5 3.22-6 3.22z" />
-                              </svg>
-                            )}
-                          </div>
+                          <UserAvatar user={user} size="small" />
                           <div>
                             <div className="font-medium text-gray-800 text-xs">
                               {user.username || "username"}
@@ -437,22 +485,36 @@ const ArchivePage = () => {
           className="w-full max-w-md text-white rounded-xl p-8 pb-4 shadow-lg relative mb-4"
           style={gradientStyle}
         >
+          {/* Add cross button */}
+          <button
+            onClick={() => {
+              setSelectedUser(null);
+              setArchiveLink("");
+            }}
+            className="absolute top-4 right-4 p-2"
+            aria-label="Close"
+          >
+            <svg
+              xmlns="http://www.w3.org/2000/svg"
+              width="24"
+              height="24"
+              viewBox="0 0 24 24"
+              fill="none"
+              stroke="currentColor"
+              strokeWidth="2"
+              strokeLinecap="round"
+              strokeLinejoin="round"
+              className="text-white"
+            >
+              <line x1="18" y1="6" x2="6" y2="18"></line>
+              <line x1="6" y1="6" x2="18" y2="18"></line>
+            </svg>
+          </button>
+
           <div className="flex flex-col items-center">
             <div className="w-full max-w-xs">
               <div className="flex flex-col items-center justify-center">
-                <div className="w-36 h-36 rounded-full bg-white bg-opacity-90 overflow-hidden flex items-center justify-center mb-6 shadow-md border-2 border-white border-opacity-50">
-                  {selectedUser.avatarUrl ? (
-                    <img
-                      src={selectedUser.avatarUrl}
-                      alt=""
-                      className="w-full h-full object-cover"
-                    />
-                  ) : (
-                    <svg width="72" height="72" viewBox="0 0 24 24" fill="#888">
-                      <path d="M12 2C6.48 2 2 6.48 2 12s4.48 10 10 10 10-4.48 10-10S17.52 2 12 2zm0 3c1.66 0 3 1.34 3 3s-1.34 3-3 3-3-1.34-3-3 1.34-3 3-3zm0 14.2c-2.5 0-4.71-1.28-6-3.22.03-1.99 4-3.08 6-3.08 1.99 0 5.97 1.09 6 3.08-1.29 1.94-3.5 3.22-6 3.22z" />
-                    </svg>
-                  )}
-                </div>
+                <UserAvatar user={selectedUser} size="large" />
 
                 <div className="text-2xl font-bold text-white mb-10">
                   @{selectedUser.username || "username"}
@@ -460,7 +522,7 @@ const ArchivePage = () => {
 
                 <button
                   onClick={handleCopyLink}
-                  className="text-black text-center text-xl mb-4 bg-white px-6 py-2 rounded-xl
+                  className="text-black text-center text-xl mb-4 bg-white px-6 py-2 rounded-3xl
                    shadow-sm cursor-pointer hover:bg-gray-50 transition-colors flex items-center justify-center gap-2"
                   aria-label="Copy link to clipboard"
                 >
@@ -539,13 +601,10 @@ const ArchivePage = () => {
             <span className="text-sm text-white font-medium">Copy</span>
           </button>
 
-          <button
-            onClick={() => {
-              setSelectedUser(null);
-              setArchiveLink("");
-            }}
+          <Link
+            to={archiveLink}
             className="rounded-lg py-3 flex flex-col items-center justify-center shadow-md"
-            aria-label="Close"
+            aria-label="See Profile"
             style={gradientStyle}
           >
             <svg
@@ -560,11 +619,11 @@ const ArchivePage = () => {
               strokeLinejoin="round"
               className="mb-1 text-white"
             >
-              <line x1="18" y1="6" x2="6" y2="18"></line>
-              <line x1="6" y1="6" x2="18" y2="18"></line>
+              <line x1="5" y1="12" x2="19" y2="12"></line>
+              <polyline points="12 5 19 12 12 19"></polyline>
             </svg>
-            <span className="text-sm text-white font-medium">Back</span>
-          </button>
+            <span className="text-sm text-white font-medium">See Profile</span>
+          </Link>
         </div>
       )}
 

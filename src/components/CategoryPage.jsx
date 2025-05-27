@@ -9,12 +9,13 @@ const CategoryPage = () => {
   const navigate = useNavigate();
   const location = useLocation();
   const [entries, setEntries] = useState([]);
-  const [loading, setLoading] = useState(true);
   const [userId, setUserId] = useState(null);
   const [userData, setUserData] = useState(null);
   const [isDesktop, setIsDesktop] = useState(false);
   const [showDownloadButton, setShowDownloadButton] = useState(true);
+  const [loadedImages, setLoadedImages] = useState(new Set());
   const buttonText = "See more on Archive!";
+  const [hasFetched, setHasFetched] = useState(false);
 
   // Function to get solid color based on category name - replacing gradient function
   const getCategoryColor = (category) => {
@@ -68,25 +69,19 @@ const CategoryPage = () => {
       if (!username) return;
 
       try {
-        // Get all users and find a match regardless of case
         const usersRef = collection(db, "users_v3");
         const usersSnapshot = await getDocs(usersRef);
 
-        // Find user with matching username (case-insensitive)
         let foundUser = null;
         usersSnapshot.forEach((doc) => {
           const data = doc.data();
-          // Check username match case-insensitively
           if (
             (data.username &&
               data.username.toLowerCase() === username.toLowerCase()) ||
             (data.name && data.name.toLowerCase() === username.toLowerCase())
           ) {
-            foundUser = {
-              id: doc.id,
-              ...data,
-            };
-            setUserId(doc.id); // Set userId here to avoid duplicate fetches
+            foundUser = { id: doc.id, ...data };
+            setUserId(doc.id);
           }
         });
 
@@ -105,129 +100,108 @@ const CategoryPage = () => {
 
   // Fetch entries for this category
   useEffect(() => {
-    async function fetchCategoryEntries() {
-      try {
-        setLoading(true);
+    let isMounted = true;
 
-        // Normalize the category name for database query
+    async function fetchCategoryEntries() {
+      if (!categoryName || !userId) return;
+
+      try {
         const normalizedCategoryName = normalizeCategoryName(categoryName);
-        console.log(
-          `Using normalized category name: ${normalizedCategoryName}`
+        const entriesQuery = query(
+          collection(db, "archives_v3"),
+          where("category", "==", normalizedCategoryName),
+          where("userId", "==", userId)
         );
 
-        // Use a simpler approach - get all entries and filter client-side
-        let entriesQuery;
-
-        if (userId) {
-          // Just filter by category and userId
-          entriesQuery = query(
-            collection(db, "archives_v3"),
-            where("category", "==", normalizedCategoryName),
-            where("userId", "==", userId)
-          );
-          console.log(
-            `Fetching all entries for category: ${normalizedCategoryName} and userId: ${userId}`
-          );
-        } else {
-          // Just filter by category
-          entriesQuery = query(
-            collection(db, "archives_v3"),
-            where("category", "==", normalizedCategoryName)
-          );
-        }
-
         const entriesSnapshot = await getDocs(entriesQuery);
-        console.log(`Query returned ${entriesSnapshot.size} documents`);
+
+        if (!isMounted) return;
 
         if (entriesSnapshot.empty) {
           setEntries([]);
-          setLoading(false);
-          return;
+        } else {
+          const entriesData = [];
+          entriesSnapshot.forEach((doc) => {
+            const data = doc.data();
+            if (
+              data.status === "completed" ||
+              !data.status ||
+              data.status === "" ||
+              data.status === null
+            ) {
+              entriesData.push({
+                id: doc.id,
+                ...data,
+              });
+            }
+          });
+
+          // Sort entries by date (newest first)
+          entriesData.sort((a, b) => {
+            // First try to use updatedAt, then fallback to createdAt
+            let dateA, dateB;
+
+            // Try to get dateA
+            if (a.updatedAt) {
+              dateA = a.updatedAt.toDate
+                ? a.updatedAt.toDate()
+                : new Date(a.updatedAt);
+            } else if (a.createdAt) {
+              dateA = a.createdAt.toDate
+                ? a.createdAt.toDate()
+                : new Date(a.createdAt);
+            } else {
+              dateA = new Date(0);
+            }
+
+            // Try to get dateB
+            if (b.updatedAt) {
+              dateB = b.updatedAt.toDate
+                ? b.updatedAt.toDate()
+                : new Date(b.updatedAt);
+            } else if (b.createdAt) {
+              dateB = b.createdAt.toDate
+                ? b.createdAt.toDate()
+                : new Date(b.createdAt);
+            } else {
+              dateB = new Date(0);
+            }
+
+            return dateB - dateA;
+          });
+
+          if (isMounted) {
+            setEntries(entriesData);
+          }
         }
-
-        const entriesData = [];
-        entriesSnapshot.forEach((doc) => {
-          const data = doc.data();
-          // Debug logging
-          console.log(
-            `Entry: ${doc.id}, Status: ${data.status}, Title: ${data.title}`
-          );
-
-          // Include if it's completed OR has no status
-          if (
-            data.status === "completed" ||
-            !data.status ||
-            data.status === "" ||
-            data.status === null
-          ) {
-            entriesData.push({
-              id: doc.id,
-              ...data,
-            });
-          }
-        });
-
-        console.log(`After filtering, we have ${entriesData.length} entries`);
-
-        // Sort entries by date (newest first)
-        entriesData.sort((a, b) => {
-          // First try to use updatedAt, then fallback to createdAt
-          let dateA, dateB;
-
-          // Try to get dateA
-          if (a.updatedAt) {
-            dateA = a.updatedAt.toDate
-              ? a.updatedAt.toDate()
-              : new Date(a.updatedAt);
-          } else if (a.createdAt) {
-            dateA = a.createdAt.toDate
-              ? a.createdAt.toDate()
-              : new Date(a.createdAt);
-          } else {
-            dateA = new Date(0);
-          }
-
-          // Try to get dateB
-          if (b.updatedAt) {
-            dateB = b.updatedAt.toDate
-              ? b.updatedAt.toDate()
-              : new Date(b.updatedAt);
-          } else if (b.createdAt) {
-            dateB = b.createdAt.toDate
-              ? b.createdAt.toDate()
-              : new Date(b.createdAt);
-          } else {
-            dateB = new Date(0);
-          }
-
-          return dateB - dateA;
-        });
-
-        setEntries(entriesData);
-        setLoading(false);
       } catch (error) {
         console.error("Error fetching entries:", error);
-        setLoading(false);
+      } finally {
+        if (isMounted) {
+          setHasFetched(true);
+        }
       }
     }
 
     fetchCategoryEntries();
+
+    return () => {
+      isMounted = false;
+    };
   }, [categoryName, userId]);
 
   // Get the solid color for this category - Replace the gradient variable
   const backgroundColor = getCategoryColor(categoryName);
 
-  // No need to extract primary color anymore since we're using solid colors
-  // Update this effect to properly clean up when component unmounts
+  // Update the useEffect for background color
   useEffect(() => {
-    // Store the original theme color to restore on unmount
-    const originalThemeColor = "#f2e8d5"; // Beige color from UserProfile
-
-    // Store original background colors to restore on unmount
-    const originalBodyBackground = document.body.style.background;
+    // Store the original colors
     const originalHtmlBackground = document.documentElement.style.background;
+    const originalBodyBackground = document.body.style.background;
+    const originalRootBackground =
+      document.getElementById("root").style.background;
 
-    // Set theme-color meta tag for areas outside viewport
+    // Set theme-color meta tag
     let metaThemeColor = document.querySelector('meta[name="theme-color"]');
     if (!metaThemeColor) {
       metaThemeColor = document.createElement("meta");
@@ -236,22 +210,21 @@ const CategoryPage = () => {
     }
     metaThemeColor.content = backgroundColor;
 
-    // Also set background color for html and body elements to handle desktop overscroll
+    // Apply background color to all necessary elements
+    document.documentElement.style.background = backgroundColor;
     document.body.style.background = backgroundColor;
-    document.documentElement.style.background = backgroundColor; // html element
+    document.getElementById("root").style.background = backgroundColor;
 
-    // Cleanup - reset to the original colors when navigating away
+    // Cleanup function
     return () => {
-      // Reset theme color
       if (metaThemeColor) {
-        metaThemeColor.content = originalThemeColor;
+        metaThemeColor.content = "#f2e8d5";
       }
-
-      // Reset body and html backgrounds
-      document.body.style.background = originalBodyBackground;
       document.documentElement.style.background = originalHtmlBackground;
+      document.body.style.background = originalBodyBackground;
+      document.getElementById("root").style.background = originalRootBackground;
     };
-  }, [categoryName, backgroundColor]);
+  }, [backgroundColor]);
 
   // Group entries by month - exclude artist entries for music category and show entries for podcasts category
   const groupEntriesByMonth = (entries) => {
@@ -401,7 +374,6 @@ const CategoryPage = () => {
 
   // Add CSS for artists gallery similar to favorites gallery
   useEffect(() => {
-    // Create a stylesheet to override any constraints for our galleries
     const styleSheet = document.createElement("style");
     styleSheet.textContent = `
       .hide-scrollbar::-webkit-scrollbar {
@@ -412,21 +384,77 @@ const CategoryPage = () => {
         scrollbar-width: none;
       }
       .gallery-container {
-        margin: 0 -20px; /* Compensate for parent padding */
-        width: calc(100% + 40px); /* Full width plus the margins */
-        overflow-x: auto;
+        margin: 0 -20px;
+        width: calc(100% + 40px);
+        overflow-x: scroll;
+        cursor: grab;
+        user-select: none;
       }
       .gallery-wrapper {
-        padding-left: 20px; /* Add padding back on the left */
-        padding-right: 5px; /* Reduced padding on right to show scrolling */
+        padding-left: 20px;
+        padding-right: 5px;
         display: flex;
         gap: 10px;
       }
     `;
     document.head.appendChild(styleSheet);
 
+    const containers = document.querySelectorAll(".gallery-container");
+
+    containers.forEach((container) => {
+      let pos = { left: 0, x: 0 };
+
+      const mouseDownHandler = function (e) {
+        container.style.cursor = "grabbing";
+
+        pos = {
+          left: container.scrollLeft,
+          x: e.clientX,
+        };
+
+        document.addEventListener("mousemove", mouseMoveHandler);
+        document.addEventListener("mouseup", mouseUpHandler);
+      };
+
+      const mouseMoveHandler = function (e) {
+        // Calculate the distance moved
+        const dx = e.clientX - pos.x;
+
+        // Update scroll position - note we add dx instead of subtracting
+        // This makes the content follow the mouse movement direction
+        container.scrollLeft = pos.left - dx;
+      };
+
+      const mouseUpHandler = function () {
+        container.style.cursor = "grab";
+
+        document.removeEventListener("mousemove", mouseMoveHandler);
+        document.removeEventListener("mouseup", mouseUpHandler);
+      };
+
+      // Add the event listeners
+      container.addEventListener("mousedown", mouseDownHandler);
+
+      // Add shift + wheel support
+      container.addEventListener(
+        "wheel",
+        (e) => {
+          if (e.shiftKey) {
+            e.preventDefault();
+            container.scrollLeft += e.deltaY;
+          }
+        },
+        { passive: false }
+      );
+    });
+
     return () => {
       document.head.removeChild(styleSheet);
+      const containers = document.querySelectorAll(".gallery-container");
+      containers.forEach((container) => {
+        container.removeEventListener("mousedown", () => {});
+        container.removeEventListener("wheel", () => {});
+      });
     };
   }, []);
 
@@ -460,9 +488,14 @@ const CategoryPage = () => {
     }),
   };
 
+  // Helper function to handle image load
+  const handleImageLoad = (imageId) => {
+    setLoadedImages((prev) => new Set(prev).add(imageId));
+  };
+
   return (
     <>
-      {/* Top safe area - fixed height, solid color */}
+      {/* Top safe area */}
       <div
         style={{
           position: "fixed",
@@ -470,556 +503,646 @@ const CategoryPage = () => {
           left: 0,
           right: 0,
           height: "env(safe-area-inset-top, 0px)",
-          backgroundColor: backgroundColor, // Use solid color
+          backgroundColor: backgroundColor,
           zIndex: 999,
         }}
       />
 
-      {/* Main content area with solid background */}
+      {/* Main container - always maintain desktop layout */}
       <div
         className="font-serif"
         style={{
           margin: "0 auto",
-          maxWidth: "100%",
-          padding: "0",
+          width: "100%",
           color: "white",
           minHeight: "100vh",
-          background: backgroundColor, // Use solid color instead of gradient
+          background: backgroundColor,
           position: "relative",
-          // Ensure content starts after the top safe area
           paddingTop: "env(safe-area-inset-top, 0px)",
+          display: "flex",
+          flexDirection: "column",
+          alignItems: isDesktop ? "center" : "stretch",
         }}
       >
-        {/* Back button - top left as in screenshot */}
+        {/* Content wrapper - force consistent width */}
         <div
           style={{
-            position: "absolute",
-            top: "16px", // This is now relative to the paddingTop
-            left: "15px",
-            zIndex: "2",
+            width: isDesktop ? "1000px" : "100%",
+            paddingLeft: "20px",
+            paddingRight: "20px",
+            paddingTop: "65px",
+            paddingBottom: "100px",
           }}
         >
-          <Link
-            to={username ? `/${username}` : "/"}
+          {/* Back button */}
+          <div
             style={{
-              color: "white",
-              textDecoration: "none",
-              display: "block",
-              padding: "10px",
+              position: "absolute",
+              top: "16px",
+              left: isDesktop ? "calc((100% - 1000px)/2 + 15px)" : "15px",
+              zIndex: "2",
             }}
           >
-            <svg
-              width="12"
-              height="21"
-              viewBox="0 0 12 21"
-              fill="none"
-              xmlns="http://www.w3.org/2000/svg"
+            <Link
+              to={username ? `/${username}` : "/"}
+              style={{
+                color: "white",
+                textDecoration: "none",
+                display: "block",
+                padding: "10px",
+              }}
             >
-              <path
-                d="M10 2L2 10.5L10 19"
-                stroke="white"
-                strokeWidth="2"
-                strokeLinecap="round"
-                strokeLinejoin="round"
-              />
-            </svg>
-          </Link>
-        </div>
+              <svg
+                width="12"
+                height="21"
+                viewBox="0 0 12 21"
+                fill="none"
+                xmlns="http://www.w3.org/2000/svg"
+              >
+                <path
+                  d="M10 2L2 10.5L10 19"
+                  stroke="white"
+                  strokeWidth="2"
+                  strokeLinecap="round"
+                  strokeLinejoin="round"
+                />
+              </svg>
+            </Link>
+          </div>
 
-        {/* Main content area with proper padding */}
-        <div style={contentStyle}>
-          {/* Category title - smaller as per screenshot */}
+          {/* Title and content - always left aligned */}
           <h1
             style={{
               fontSize: "36px",
               fontWeight: "bold",
               fontFamily: "Baskerville, serif",
               color: "white",
-              margin: "20px 0 20px 0", // Increased top margin from 10px to 20px
+              margin: "20px 0 20px 0",
+              textAlign: "left",
             }}
           >
             {formatCategoryName(categoryName)}
           </h1>
 
-          {loading ? (
-            <p>Loading {categoryName} entries...</p>
-          ) : entries.length === 0 ? (
-            <p>No {categoryName} entries found.</p>
+          {hasFetched && entries.length === 0 ? (
+            <p
+              style={{
+                fontSize: "16px",
+                color: "white",
+                opacity: 0.8,
+                textAlign: "left",
+              }}
+            >
+              No {categoryName} entries found.
+            </p>
           ) : (
-            <div>
-              {/* Favorites Section - Only show if there are 5-star ratings */}
-              {hasFavorites && (
-                <div style={{ marginBottom: "30px" }}>
-                  <h2
-                    style={{
-                      fontSize: "20px",
-                      fontWeight: "bold",
-                      fontFamily: "Baskerville, serif",
-                      color: "white",
-                      margin: "20px 0 5px 0",
-                    }}
-                  >
-                    Favourites
-                  </h2>
+            <div style={{ width: "100%" }}>
+              {/* Only show sections when we have entries */}
+              {entries.length > 0 && (
+                <>
+                  {/* Favorites Section if exists */}
+                  {hasFavorites && (
+                    <div style={{ marginBottom: "30px" }}>
+                      <h2
+                        style={{
+                          fontSize: "20px",
+                          fontWeight: "bold",
+                          fontFamily: "Baskerville, serif",
+                          color: "white",
+                          margin: "20px 0 5px 0",
+                        }}
+                      >
+                        Favourites
+                      </h2>
 
-                  <p
-                    style={{
-                      fontSize: "12px",
-                      opacity: "0.8",
-                      color: "white",
-                      fontFamily:
-                        "-apple-system, BlinkMacSystemFont, 'SF Pro Text', 'Segoe UI', Roboto, Helvetica, Arial, sans-serif",
-                      margin: "0 0 15px 0",
-                    }}
-                  >
-                    Archives with a 5-star rating
-                  </p>
+                      <p
+                        style={{
+                          fontSize: "12px",
+                          opacity: "0.8",
+                          color: "white",
+                          fontFamily:
+                            "-apple-system, BlinkMacSystemFont, 'SF Pro Text', 'Segoe UI', Roboto, Helvetica, Arial, sans-serif",
+                          margin: "0 0 15px 0",
+                        }}
+                      >
+                        Archives with a 5-star rating
+                      </p>
 
-                  {/* Horizontal scrolling gallery with custom class */}
-                  <div className="gallery-container hide-scrollbar">
-                    <div className="gallery-wrapper">
-                      {favoriteEntries.map((entry) => (
-                        <div
-                          key={`favorite-gallery-${entry.id}`}
-                          style={{
-                            position: "relative",
-                            minWidth: "160px",
-                            height: "220px",
-                            borderRadius: "8px",
-                            overflow: "hidden",
-                            flexShrink: 0,
-                          }}
-                        >
-                          {/* Background image */}
-                          <div
-                            style={{
-                              position: "absolute",
-                              width: "100%",
-                              height: "100%",
-                              backgroundImage: entry.thumbnailUrl
-                                ? `url(${entry.thumbnailUrl})`
-                                : "none",
-                              backgroundSize: "cover",
-                              backgroundPosition: "center",
-                              backgroundColor: entry.thumbnailUrl
-                                ? "transparent"
-                                : "rgba(255, 255, 255, 0.2)",
-                            }}
-                          />
-
-                          {/* Gradient overlay for text visibility */}
-                          <div
-                            style={{
-                              position: "absolute",
-                              bottom: 0,
-                              left: 0,
-                              right: 0,
-                              height: "33%",
-                              background:
-                                "linear-gradient(to top, rgba(0,0,0,0.8) 0%, rgba(0,0,0,0.4) 80%, rgba(0,0,0,0) 100%)",
-                              zIndex: 1,
-                            }}
-                          />
-
-                          {/* Text overlay */}
-                          <div
-                            style={{
-                              position: "absolute",
-                              bottom: 0,
-                              left: 0,
-                              right: 0,
-                              padding: "10px",
-                              zIndex: 2,
-                            }}
-                          >
-                            <h4
+                      {/* Horizontal scrolling gallery with custom class */}
+                      <div className="gallery-container hide-scrollbar">
+                        <div className="gallery-wrapper">
+                          {favoriteEntries.map((entry) => (
+                            <div
+                              key={`favorite-gallery-${entry.id}`}
                               style={{
-                                fontSize: "14px",
-                                margin: "0 0 1px 0",
-                                fontFamily:
-                                  "-apple-system, BlinkMacSystemFont, 'SF Pro Text', 'Segoe UI', Roboto, Helvetica, Arial, sans-serif",
-                                fontWeight: "500",
-                                color: "white",
-                                textShadow: "0px 1px 2px rgba(0,0,0,0.5)",
-                                lineHeight: "1.2",
+                                position: "relative",
+                                minWidth: "160px",
+                                height: "220px",
+                                borderRadius: "8px",
+                                overflow: "hidden",
+                                flexShrink: 0,
+                                backgroundColor: "rgba(255, 255, 255, 0.1)", // Loading background
                               }}
                             >
-                              {entry.title || "Untitled Entry"}
-                            </h4>
+                              {/* Show loading state until image loads */}
+                              {!loadedImages.has(entry.id) &&
+                                entry.thumbnailUrl && (
+                                  <div
+                                    style={{
+                                      position: "absolute",
+                                      width: "100%",
+                                      height: "100%",
+                                      backgroundColor:
+                                        "rgba(255, 255, 255, 0.1)",
+                                    }}
+                                  />
+                                )}
 
-                            <p
-                              style={{
-                                fontSize: "12px",
-                                margin: "0",
-                                fontFamily:
-                                  "-apple-system, BlinkMacSystemFont, 'SF Pro Text', 'Segoe UI', Roboto, Helvetica, Arial, sans-serif",
-                                color: "white",
-                                opacity: "0.9",
-                                textShadow: "0px 1px 2px rgba(0,0,0,0.5)",
-                                lineHeight: "1.2",
-                              }}
-                            >
-                              {entry.creator || "Unknown Creator"}
-                            </p>
-                          </div>
-                        </div>
-                      ))}
-                      {/* Add an empty spacer div at the end */}
-                      <div style={{ minWidth: "20px", flexShrink: 0 }}></div>
-                    </div>
-                  </div>
-                </div>
-              )}
-
-              {/* Artists Section - Only show for music category if there are artist entries */}
-              {hasArtists && (
-                <div style={{ marginBottom: "30px" }}>
-                  <h2
-                    style={{
-                      fontSize: "20px",
-                      fontWeight: "bold",
-                      fontFamily: "Baskerville, serif",
-                      color: "white",
-                      margin: "20px 0 7px 0",
-                    }}
-                  >
-                    Artists
-                  </h2>
-
-                  {/* Horizontal scrolling gallery for artists */}
-                  <div className="gallery-container hide-scrollbar">
-                    <div className="gallery-wrapper">
-                      {artistEntries.map((entry) => (
-                        <div
-                          key={`artist-gallery-${entry.id}`}
-                          style={{
-                            minWidth: "140px",
-                            display: "flex",
-                            flexDirection: "column",
-                            alignItems: "center",
-                            flexShrink: 0,
-                            padding: "5px 0", // Minimal vertical padding
-                          }}
-                        >
-                          {/* Circular artist image - simple implementation */}
-                          <img
-                            src={entry.thumbnailUrl || ""}
-                            alt={entry.title || "Artist"}
-                            style={{
-                              width: "130px",
-                              height: "130px",
-                              borderRadius: "50%", // Perfect circle
-                              objectFit: "cover", // Maintains aspect ratio while filling
-                              objectPosition: "center", // Centers the image
-                              marginBottom: "4px", // Small gap between image and text
-                            }}
-                            onError={(e) => {
-                              // Fallback for missing images
-                              e.target.onerror = null;
-                              e.target.style.backgroundColor =
-                                "rgba(255, 255, 255, 0.2)";
-                            }}
-                          />
-
-                          {/* Simple text below the image */}
-                          <h4
-                            style={{
-                              fontSize: "15px",
-                              margin: "6px 0 1px 0",
-                              padding: "0 2px",
-                              fontFamily:
-                                "-apple-system, BlinkMacSystemFont, 'SF Pro Text', 'Segoe UI', Roboto, Helvetica, Arial, sans-serif",
-                              fontWeight: "500",
-                              color: "white",
-                              lineHeight: "1.2",
-                              textAlign: "center",
-                              width: "100%",
-                            }}
-                          >
-                            {entry.title || "Untitled Artist"}
-                          </h4>
-
-                          {entry.genre && (
-                            <p
-                              style={{
-                                fontSize: "12px",
-                                margin: "0",
-                                padding: "0 2px",
-                                fontFamily:
-                                  "-apple-system, BlinkMacSystemFont, 'SF Pro Text', 'Segoe UI', Roboto, Helvetica, Arial, sans-serif",
-                                color: "white",
-                                opacity: "0.8",
-                                textShadow: "0px 1px 2px rgba(0,0,0,0.5)",
-                                lineHeight: "1.2",
-                                textAlign: "center",
-                                width: "100%",
-                              }}
-                            >
-                              {entry.genre}
-                            </p>
-                          )}
-                        </div>
-                      ))}
-                      {/* Add an empty spacer div at the end */}
-                      <div style={{ minWidth: "20px", flexShrink: 0 }}></div>
-                    </div>
-                  </div>
-                </div>
-              )}
-
-              {/* Shows Section - Only show for podcasts category if there are show entries */}
-              {hasShows && (
-                <div style={{ marginBottom: "30px" }}>
-                  <h2
-                    style={{
-                      fontSize: "20px",
-                      fontWeight: "bold",
-                      fontFamily: "Baskerville, serif",
-                      color: "white",
-                      margin: "20px 0 7px 0",
-                    }}
-                  >
-                    Shows
-                  </h2>
-
-                  {/* Horizontal scrolling gallery for shows */}
-                  <div className="gallery-container hide-scrollbar">
-                    <div className="gallery-wrapper">
-                      {showEntries.map((entry) => (
-                        <div
-                          key={`show-gallery-${entry.id}`}
-                          style={{
-                            minWidth: "140px",
-                            display: "flex",
-                            flexDirection: "column",
-                            alignItems: "center",
-                            flexShrink: 0,
-                            padding: "5px 0", // Minimal vertical padding
-                          }}
-                        >
-                          {/* Circular show image - similar to artist implementation */}
-                          <img
-                            src={entry.thumbnailUrl || ""}
-                            alt={entry.title || "Show"}
-                            style={{
-                              width: "130px",
-                              height: "130px",
-                              borderRadius: "50%", // Perfect circle
-                              objectFit: "cover", // Maintains aspect ratio while filling
-                              objectPosition: "center", // Centers the image
-                              marginBottom: "4px", // Small gap between image and text
-                            }}
-                            onError={(e) => {
-                              // Fallback for missing images
-                              e.target.onerror = null;
-                              e.target.style.backgroundColor =
-                                "rgba(255, 255, 255, 0.2)";
-                            }}
-                          />
-
-                          {/* Simple text below the image */}
-                          <h4
-                            style={{
-                              fontSize: "15px",
-                              margin: "6px 0 1px 0",
-                              padding: "0 2px",
-                              fontFamily:
-                                "-apple-system, BlinkMacSystemFont, 'SF Pro Text', 'Segoe UI', Roboto, Helvetica, Arial, sans-serif",
-                              fontWeight: "500",
-                              color: "white",
-                              lineHeight: "1.2",
-                              textAlign: "center",
-                              width: "100%",
-                            }}
-                          >
-                            {entry.title || "Untitled Show"}
-                          </h4>
-
-                          {entry.genre && (
-                            <p
-                              style={{
-                                fontSize: "12px",
-                                margin: "0",
-                                padding: "0 2px",
-                                fontFamily:
-                                  "-apple-system, BlinkMacSystemFont, 'SF Pro Text', 'Segoe UI', Roboto, Helvetica, Arial, sans-serif",
-                                color: "white",
-                                opacity: "0.8",
-                                textShadow: "0px 1px 2px rgba(0,0,0,0.5)",
-                                lineHeight: "1.2",
-                                textAlign: "center",
-                                width: "100%",
-                              }}
-                            >
-                              {entry.genre}
-                            </p>
-                          )}
-                        </div>
-                      ))}
-                      {/* Add an empty spacer div at the end */}
-                      <div style={{ minWidth: "20px", flexShrink: 0 }}></div>
-                    </div>
-                  </div>
-                </div>
-              )}
-
-              {/* "Watched" or equivalent section title */}
-              <h2
-                style={{
-                  fontSize: "20px",
-                  fontWeight: "bold",
-                  fontFamily: "Baskerville, serif",
-                  color: "white",
-                  margin: "20px 0 10px 0",
-                }}
-              >
-                {getCompletedVerbForCategory(categoryName)}
-              </h2>
-
-              {/* Chronological entries by month - filter out artist entries for music category */}
-              {Object.keys(groupedEntries).map((monthYear) => (
-                <div key={monthYear} style={{ marginBottom: "25px" }}>
-                  {/* Month heading - smaller */}
-                  <h3
-                    style={{
-                      fontSize: "16px",
-                      color: "rgba(255, 255, 255, 0.8)",
-                      marginBottom: "6px",
-                      fontFamily: "Baskerville, serif",
-                      fontWeight: "bold",
-                    }}
-                  >
-                    {monthYear}
-                  </h3>
-
-                  {/* Full-width divider line below month heading */}
-                  <div
-                    style={{
-                      height: "1px",
-                      backgroundColor: "rgba(255, 255, 255, 0.15)",
-                      width: "100%",
-                      marginBottom: "2px", // Add space after the divider
-                    }}
-                  />
-
-                  {/* Entries list with divider lines */}
-                  <div>
-                    {groupedEntries[monthYear].map((entry, index) => (
-                      <div key={entry.id}>
-                        <div
-                          style={{
-                            display: "flex",
-                            alignItems: "center",
-                            paddingTop: "4px",
-                            paddingBottom: "4px",
-                            position: "relative",
-                          }}
-                        >
-                          {/* Thumbnail/Cover - smaller */}
-                          <div style={{ marginRight: "12px", flexShrink: 0 }}>
-                            {entry.thumbnailUrl ? (
-                              <img
-                                src={entry.thumbnailUrl}
-                                alt={entry.title || "Entry thumbnail"}
-                                style={{
-                                  width: "45px",
-                                  height: "45spx",
-                                  objectFit: "cover",
-                                  borderRadius: "4px",
-                                }}
-                              />
-                            ) : (
+                              {/* Background image with load handler */}
                               <div
                                 style={{
-                                  width: "45px",
-                                  height: "45px",
-                                  backgroundColor: "rgba(255, 255, 255, 0.2)",
-                                  borderRadius: "4px",
-                                  display: "flex",
-                                  alignItems: "center",
-                                  justifyContent: "center",
+                                  position: "absolute",
+                                  width: "100%",
+                                  height: "100%",
+                                  backgroundImage: entry.thumbnailUrl
+                                    ? `url(${entry.thumbnailUrl})`
+                                    : "none",
+                                  backgroundSize: "cover",
+                                  backgroundPosition: "center",
+                                  backgroundColor: entry.thumbnailUrl
+                                    ? "transparent"
+                                    : "rgba(255, 255, 255, 0.2)",
+                                  opacity: loadedImages.has(entry.id) ? 1 : 0,
+                                  transition: "opacity 0.3s ease",
+                                }}
+                                onLoad={() => handleImageLoad(entry.id)}
+                              />
+
+                              {/* Gradient overlay for text visibility */}
+                              <div
+                                style={{
+                                  position: "absolute",
+                                  bottom: 0,
+                                  left: 0,
+                                  right: 0,
+                                  height: "33%",
+                                  background:
+                                    "linear-gradient(to top, rgba(0,0,0,0.8) 0%, rgba(0,0,0,0.4) 80%, rgba(0,0,0,0) 100%)",
+                                  zIndex: 1,
+                                }}
+                              />
+
+                              {/* Text overlay */}
+                              <div
+                                style={{
+                                  position: "absolute",
+                                  bottom: 0,
+                                  left: 0,
+                                  right: 0,
+                                  padding: "10px",
+                                  zIndex: 2,
                                 }}
                               >
-                                <span style={{ fontSize: "16px" }}>?</span>
-                              </div>
-                            )}
-                          </div>
-
-                          {/* Entry Details - Title and Creator in SF Pro with rating next to creator */}
-                          <div style={{ flex: "1" }}>
-                            <h4
-                              style={{
-                                fontSize: "14px",
-                                margin: "0 0 0px 0",
-                                fontFamily:
-                                  "-apple-system, BlinkMacSystemFont, 'SF Pro Text', 'Segoe UI', Roboto, Helvetica, Arial, sans-serif",
-                                fontWeight: "normal",
-                              }}
-                            >
-                              {entry.title || "Untitled Entry"}
-                            </h4>
-
-                            <div
-                              style={{
-                                display: "flex",
-                                alignItems: "center",
-                                fontSize: "12px",
-                                margin: "0",
-                                opacity: "0.7",
-                                fontFamily:
-                                  "-apple-system, BlinkMacSystemFont, 'SF Pro Text', 'Segoe UI', Roboto, Helvetica, Arial, sans-serif",
-                              }}
-                            >
-                              {/* Creator name */}
-                              <span>{entry.creator || "Unknown Creator"}</span>
-
-                              {/* Star rating - right next to the creator with a spacing */}
-                              {formatRating(entry.rating) && (
-                                <span
+                                <h4
                                   style={{
-                                    marginLeft: "8px",
-                                    fontSize: "12px",
-                                    opacity: "1", // Make it a bit more visible
+                                    fontSize: "14px",
+                                    margin: "0 0 1px 0",
+                                    fontFamily:
+                                      "-apple-system, BlinkMacSystemFont, 'SF Pro Text', 'Segoe UI', Roboto, Helvetica, Arial, sans-serif",
+                                    fontWeight: "500",
                                     color: "white",
-                                    display: "flex",
-                                    alignItems: "center",
+                                    textShadow: "0px 1px 2px rgba(0,0,0,0.5)",
+                                    lineHeight: "1.2",
                                   }}
                                 >
-                                  <span
-                                    style={{
-                                      marginRight: "2px",
-                                      fontSize: "11px",
-                                    }}
-                                  >
-                                    ★
-                                  </span>
-                                  {formatRating(entry.rating)}
-                                </span>
+                                  {entry.title || "Untitled Entry"}
+                                </h4>
+
+                                <p
+                                  style={{
+                                    fontSize: "12px",
+                                    margin: "0",
+                                    fontFamily:
+                                      "-apple-system, BlinkMacSystemFont, 'SF Pro Text', 'Segoe UI', Roboto, Helvetica, Arial, sans-serif",
+                                    color: "white",
+                                    opacity: "0.9",
+                                    textShadow: "0px 1px 2px rgba(0,0,0,0.5)",
+                                    lineHeight: "1.2",
+                                  }}
+                                >
+                                  {entry.creator || "Unknown Creator"}
+                                </p>
+                              </div>
+                            </div>
+                          ))}
+                          {/* Add an empty spacer div at the end */}
+                          <div
+                            style={{ minWidth: "20px", flexShrink: 0 }}
+                          ></div>
+                        </div>
+                      </div>
+                    </div>
+                  )}
+
+                  {/* Artists Section if exists */}
+                  {hasArtists && (
+                    <div style={{ marginBottom: "30px" }}>
+                      <h2
+                        style={{
+                          fontSize: "20px",
+                          fontWeight: "bold",
+                          fontFamily: "Baskerville, serif",
+                          color: "white",
+                          margin: "20px 0 7px 0",
+                        }}
+                      >
+                        Artists
+                      </h2>
+
+                      {/* Horizontal scrolling gallery for artists */}
+                      <div className="gallery-container hide-scrollbar">
+                        <div className="gallery-wrapper">
+                          {artistEntries.map((entry) => (
+                            <div
+                              key={`artist-gallery-${entry.id}`}
+                              style={{
+                                minWidth: "140px",
+                                display: "flex",
+                                flexDirection: "column",
+                                alignItems: "center",
+                                flexShrink: 0,
+                                padding: "5px 0", // Minimal vertical padding
+                              }}
+                            >
+                              {/* Circular artist image - simple implementation */}
+                              <img
+                                src={entry.thumbnailUrl || ""}
+                                alt={entry.title || "Artist"}
+                                style={{
+                                  width: "130px",
+                                  height: "130px",
+                                  borderRadius: "50%", // Perfect circle
+                                  objectFit: "cover", // Maintains aspect ratio while filling
+                                  objectPosition: "center", // Centers the image
+                                  marginBottom: "4px", // Small gap between image and text
+                                  opacity: loadedImages.has(entry.id) ? 1 : 0,
+                                  transition: "opacity 0.3s ease",
+                                  backgroundColor: "rgba(255, 255, 255, 0.1)", // Loading background
+                                }}
+                                onLoad={() => handleImageLoad(entry.id)}
+                                onError={(e) => {
+                                  // Fallback for missing images
+                                  e.target.onerror = null;
+                                  e.target.style.backgroundColor =
+                                    "rgba(255, 255, 255, 0.2)";
+                                }}
+                              />
+
+                              {/* Simple text below the image */}
+                              <h4
+                                style={{
+                                  fontSize: "15px",
+                                  margin: "6px 0 1px 0",
+                                  padding: "0 2px",
+                                  fontFamily:
+                                    "-apple-system, BlinkMacSystemFont, 'SF Pro Text', 'Segoe UI', Roboto, Helvetica, Arial, sans-serif",
+                                  fontWeight: "500",
+                                  color: "white",
+                                  lineHeight: "1.2",
+                                  textAlign: "center",
+                                  width: "100%",
+                                }}
+                              >
+                                {entry.title || "Untitled Artist"}
+                              </h4>
+
+                              {entry.genre && (
+                                <p
+                                  style={{
+                                    fontSize: "12px",
+                                    margin: "0",
+                                    padding: "0 2px",
+                                    fontFamily:
+                                      "-apple-system, BlinkMacSystemFont, 'SF Pro Text', 'Segoe UI', Roboto, Helvetica, Arial, sans-serif",
+                                    color: "white",
+                                    opacity: "0.8",
+                                    textShadow: "0px 1px 2px rgba(0,0,0,0.5)",
+                                    lineHeight: "1.2",
+                                    textAlign: "center",
+                                    width: "100%",
+                                  }}
+                                >
+                                  {entry.genre}
+                                </p>
                               )}
                             </div>
-                          </div>
-
-                          {/* Remove the separate rating section */}
-                          <div style={{ marginLeft: "auto" }} />
+                          ))}
+                          {/* Add an empty spacer div at the end */}
+                          <div
+                            style={{ minWidth: "20px", flexShrink: 0 }}
+                          ></div>
                         </div>
+                      </div>
+                    </div>
+                  )}
 
-                        {/* Add divider line after each entry except the last one - 
-                            padded on left to align with content after thumbnail */}
-                        {index < groupedEntries[monthYear].length - 1 && (
+                  {/* Shows Section if exists */}
+                  {hasShows && (
+                    <div style={{ marginBottom: "30px" }}>
+                      <h2
+                        style={{
+                          fontSize: "20px",
+                          fontWeight: "bold",
+                          fontFamily: "Baskerville, serif",
+                          color: "white",
+                          margin: "20px 0 7px 0",
+                        }}
+                      >
+                        Shows
+                      </h2>
+
+                      {/* Horizontal scrolling gallery for shows */}
+                      <div className="gallery-container hide-scrollbar">
+                        <div className="gallery-wrapper">
+                          {showEntries.map((entry) => (
+                            <div
+                              key={`show-gallery-${entry.id}`}
+                              style={{
+                                minWidth: "140px",
+                                display: "flex",
+                                flexDirection: "column",
+                                alignItems: "center",
+                                flexShrink: 0,
+                                padding: "5px 0", // Minimal vertical padding
+                              }}
+                            >
+                              {/* Circular show image - similar to artist implementation */}
+                              <img
+                                src={entry.thumbnailUrl || ""}
+                                alt={entry.title || "Show"}
+                                style={{
+                                  width: "130px",
+                                  height: "130px",
+                                  borderRadius: "50%", // Perfect circle
+                                  objectFit: "cover", // Maintains aspect ratio while filling
+                                  objectPosition: "center", // Centers the image
+                                  marginBottom: "4px", // Small gap between image and text
+                                  opacity: loadedImages.has(entry.id) ? 1 : 0,
+                                  transition: "opacity 0.3s ease",
+                                  backgroundColor: "rgba(255, 255, 255, 0.1)", // Loading background
+                                }}
+                                onLoad={() => handleImageLoad(entry.id)}
+                                onError={(e) => {
+                                  // Fallback for missing images
+                                  e.target.onerror = null;
+                                  e.target.style.backgroundColor =
+                                    "rgba(255, 255, 255, 0.2)";
+                                }}
+                              />
+
+                              {/* Simple text below the image */}
+                              <h4
+                                style={{
+                                  fontSize: "15px",
+                                  margin: "6px 0 1px 0",
+                                  padding: "0 2px",
+                                  fontFamily:
+                                    "-apple-system, BlinkMacSystemFont, 'SF Pro Text', 'Segoe UI', Roboto, Helvetica, Arial, sans-serif",
+                                  fontWeight: "500",
+                                  color: "white",
+                                  lineHeight: "1.2",
+                                  textAlign: "center",
+                                  width: "100%",
+                                }}
+                              >
+                                {entry.title || "Untitled Show"}
+                              </h4>
+
+                              {entry.genre && (
+                                <p
+                                  style={{
+                                    fontSize: "12px",
+                                    margin: "0",
+                                    padding: "0 2px",
+                                    fontFamily:
+                                      "-apple-system, BlinkMacSystemFont, 'SF Pro Text', 'Segoe UI', Roboto, Helvetica, Arial, sans-serif",
+                                    color: "white",
+                                    opacity: "0.8",
+                                    textShadow: "0px 1px 2px rgba(0,0,0,0.5)",
+                                    lineHeight: "1.2",
+                                    textAlign: "center",
+                                    width: "100%",
+                                  }}
+                                >
+                                  {entry.genre}
+                                </p>
+                              )}
+                            </div>
+                          ))}
+                          {/* Add an empty spacer div at the end */}
+                          <div
+                            style={{ minWidth: "20px", flexShrink: 0 }}
+                          ></div>
+                        </div>
+                      </div>
+                    </div>
+                  )}
+
+                  {/* Only show "Watched"/"Listened" section when we have entries */}
+                  {entries.length > 0 && (
+                    <>
+                      <h2
+                        style={{
+                          fontSize: "20px",
+                          fontWeight: "bold",
+                          fontFamily: "Baskerville, serif",
+                          color: "white",
+                          margin: "20px 0 10px 0",
+                        }}
+                      >
+                        {getCompletedVerbForCategory(categoryName)}
+                      </h2>
+                      {/* Chronological entries by month - filter out artist entries for music category */}
+                      {Object.keys(groupedEntries).map((monthYear) => (
+                        <div key={monthYear} style={{ marginBottom: "25px" }}>
+                          {/* Month heading - smaller */}
+                          <h3
+                            style={{
+                              fontSize: "16px",
+                              color: "rgba(255, 255, 255, 0.8)",
+                              marginBottom: "6px",
+                              fontFamily: "Baskerville, serif",
+                              fontWeight: "bold",
+                            }}
+                          >
+                            {monthYear}
+                          </h3>
+
+                          {/* Full-width divider line below month heading */}
                           <div
                             style={{
                               height: "1px",
                               backgroundColor: "rgba(255, 255, 255, 0.15)",
-                              width: "calc(100% - 60px)", // Adjust width based on thumbnail (50px) + right margin (12px)
-                              marginLeft: "58px", // Equal to thumbnail width (50px) + right margin (12px)
+                              width: "100%",
+                              marginBottom: "2px", // Add space after the divider
                             }}
                           />
-                        )}
-                      </div>
-                    ))}
-                  </div>
-                </div>
-              ))}
+
+                          {/* Entries list with divider lines */}
+                          <div>
+                            {groupedEntries[monthYear].map((entry, index) => (
+                              <div key={entry.id}>
+                                <div
+                                  style={{
+                                    display: "flex",
+                                    alignItems: "center",
+                                    paddingTop: "4px",
+                                    paddingBottom: "4px",
+                                    position: "relative",
+                                  }}
+                                >
+                                  {/* Thumbnail/Cover - smaller */}
+                                  <div
+                                    style={{
+                                      marginRight: "12px",
+                                      flexShrink: 0,
+                                    }}
+                                  >
+                                    {entry.thumbnailUrl ? (
+                                      <div
+                                        style={{
+                                          position: "relative",
+                                          width: "45px",
+                                          height: "45px",
+                                          backgroundColor:
+                                            "rgba(255, 255, 255, 0.1)", // Loading background
+                                          borderRadius: "4px",
+                                        }}
+                                      >
+                                        <img
+                                          src={entry.thumbnailUrl}
+                                          alt={entry.title || "Entry thumbnail"}
+                                          style={{
+                                            width: "45px",
+                                            height: "45px",
+                                            objectFit: "cover",
+                                            borderRadius: "4px",
+                                            opacity: loadedImages.has(entry.id)
+                                              ? 1
+                                              : 0,
+                                            transition: "opacity 0.3s ease",
+                                            position: "absolute",
+                                            top: 0,
+                                            left: 0,
+                                          }}
+                                          onLoad={() =>
+                                            handleImageLoad(entry.id)
+                                          }
+                                        />
+                                      </div>
+                                    ) : (
+                                      <div
+                                        style={{
+                                          width: "45px",
+                                          height: "45px",
+                                          backgroundColor:
+                                            "rgba(255, 255, 255, 0.2)",
+                                          borderRadius: "4px",
+                                          display: "flex",
+                                          alignItems: "center",
+                                          justifyContent: "center",
+                                        }}
+                                      >
+                                        <span style={{ fontSize: "16px" }}>
+                                          ?
+                                        </span>
+                                      </div>
+                                    )}
+                                  </div>
+
+                                  {/* Entry Details - Title and Creator in SF Pro with rating next to creator */}
+                                  <div style={{ flex: "1" }}>
+                                    <h4
+                                      style={{
+                                        fontSize: "14px",
+                                        margin: "0 0 0px 0",
+                                        fontFamily:
+                                          "-apple-system, BlinkMacSystemFont, 'SF Pro Text', 'Segoe UI', Roboto, Helvetica, Arial, sans-serif",
+                                        fontWeight: "normal",
+                                      }}
+                                    >
+                                      {entry.title || "Untitled Entry"}
+                                    </h4>
+
+                                    <div
+                                      style={{
+                                        display: "flex",
+                                        alignItems: "center",
+                                        fontSize: "12px",
+                                        margin: "0",
+                                        opacity: "0.7",
+                                        fontFamily:
+                                          "-apple-system, BlinkMacSystemFont, 'SF Pro Text', 'Segoe UI', Roboto, Helvetica, Arial, sans-serif",
+                                      }}
+                                    >
+                                      {/* Creator name */}
+                                      <span>
+                                        {entry.creator || "Unknown Creator"}
+                                      </span>
+
+                                      {/* Star rating - right next to the creator with a spacing */}
+                                      {formatRating(entry.rating) && (
+                                        <span
+                                          style={{
+                                            marginLeft: "8px",
+                                            fontSize: "12px",
+                                            opacity: "1", // Make it a bit more visible
+                                            color: "white",
+                                            display: "flex",
+                                            alignItems: "center",
+                                          }}
+                                        >
+                                          <span
+                                            style={{
+                                              marginRight: "2px",
+                                              fontSize: "11px",
+                                            }}
+                                          >
+                                            ★
+                                          </span>
+                                          {formatRating(entry.rating)}
+                                        </span>
+                                      )}
+                                    </div>
+                                  </div>
+
+                                  {/* Remove the separate rating section */}
+                                  <div style={{ marginLeft: "auto" }} />
+                                </div>
+
+                                {/* Add divider line after each entry except the last one - 
+                                    padded on left to align with content after thumbnail */}
+                                {index <
+                                  groupedEntries[monthYear].length - 1 && (
+                                  <div
+                                    style={{
+                                      height: "1px",
+                                      backgroundColor:
+                                        "rgba(255, 255, 255, 0.15)",
+                                      width: "calc(100% - 60px)", // Adjust width based on thumbnail (50px) + right margin (12px)
+                                      marginLeft: "58px", // Equal to thumbnail width (50px) + right margin (12px)
+                                    }}
+                                  />
+                                )}
+                              </div>
+                            ))}
+                          </div>
+                        </div>
+                      ))}
+                    </>
+                  )}
+                </>
+              )}
             </div>
           )}
         </div>
@@ -1081,7 +1204,7 @@ const CategoryPage = () => {
         </div>
       )}
 
-      {/* Bottom safe area - fixed height, solid color */}
+      {/* Bottom safe area */}
       <div
         style={{
           position: "fixed",
@@ -1089,7 +1212,7 @@ const CategoryPage = () => {
           left: 0,
           right: 0,
           height: "env(safe-area-inset-bottom, 0px)",
-          backgroundColor: backgroundColor, // Use solid color
+          backgroundColor: backgroundColor,
           zIndex: 999,
         }}
       />
