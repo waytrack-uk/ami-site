@@ -590,10 +590,10 @@ const CategoryPage = () => {
                 fontSize: "16px",
                 color: "white",
                 opacity: 0.8,
-                textAlign: "left",
+                textAlign: "center",
               }}
             >
-              No {categoryName} entries found.
+              No {categoryName} archived yet...
             </p>
           ) : (
             <div style={{ width: "100%" }}>
@@ -713,6 +713,11 @@ const CategoryPage = () => {
                                     color: "white",
                                     textShadow: "0px 1px 2px rgba(0,0,0,0.5)",
                                     lineHeight: "1.2",
+                                    display: "-webkit-box",
+                                    WebkitLineClamp: "2",
+                                    WebkitBoxOrient: "vertical",
+                                    overflow: "hidden",
+                                    textOverflow: "ellipsis",
                                   }}
                                 >
                                   {entry.title || "Untitled Entry"}
@@ -728,6 +733,9 @@ const CategoryPage = () => {
                                     opacity: "0.9",
                                     textShadow: "0px 1px 2px rgba(0,0,0,0.5)",
                                     lineHeight: "1.2",
+                                    whiteSpace: "nowrap",
+                                    overflow: "hidden",
+                                    textOverflow: "ellipsis",
                                   }}
                                 >
                                   {entry.creator || "Unknown Creator"}
@@ -1065,10 +1073,17 @@ const CategoryPage = () => {
                                     <h4
                                       style={{
                                         fontSize: "14px",
-                                        margin: "0 0 0px 0",
+                                        margin: "0 0 1px 0",
                                         fontFamily:
                                           "-apple-system, BlinkMacSystemFont, 'SF Pro Text', 'Segoe UI', Roboto, Helvetica, Arial, sans-serif",
-                                        fontWeight: "normal",
+                                        fontWeight: "500",
+                                        color: "white",
+                                        lineHeight: "1.2",
+                                        display: "-webkit-box",
+                                        WebkitLineClamp: "2",
+                                        WebkitBoxOrient: "vertical",
+                                        overflow: "hidden",
+                                        textOverflow: "ellipsis",
                                       }}
                                     >
                                       {entry.title || "Untitled Entry"}
@@ -1086,7 +1101,13 @@ const CategoryPage = () => {
                                       }}
                                     >
                                       {/* Creator name */}
-                                      <span>
+                                      <span
+                                        style={{
+                                          whiteSpace: "nowrap",
+                                          overflow: "hidden",
+                                          textOverflow: "ellipsis",
+                                        }}
+                                      >
                                         {entry.creator || "Unknown Creator"}
                                       </span>
 

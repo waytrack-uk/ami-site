@@ -371,8 +371,9 @@ const UserProfile = () => {
         entry.status === null
     );
 
-    // Show placeholders if we have no entries yet but have basic data
-    const showPlaceholders = completedEntries.length === 0 && hasBasicData;
+    // Show placeholders during loading state (either forced or real loading)
+    const isLoading = FORCE_LOADING_STATE || !hasBasicData;
+    const showPlaceholders = isLoading;
     const placeholderCount = isMobile ? 4 : isSquareGrid ? 14 : 13;
 
     return (
@@ -416,9 +417,9 @@ const UserProfile = () => {
                     <PlaceholderBox isSquare={isSquareGrid} />
                   </div>
                 ))
-            : // Show actual entries
-            completedEntries.length > 0
-            ? completedEntries.slice(0, displayLimit).map((entry) => (
+            : completedEntries.length > 0
+            ? // Show actual entries
+              completedEntries.slice(0, displayLimit).map((entry) => (
                 <div
                   key={entry.id}
                   style={{
@@ -475,8 +476,29 @@ const UserProfile = () => {
             }}
           >
             <div>
-              {FORCE_LOADING_STATE || !user.avatarUrl ? (
+              {FORCE_LOADING_STATE ? (
                 <ProfilePlaceholder />
+              ) : !user.avatarUrl ? (
+                <div
+                  style={{
+                    width: "100px",
+                    height: "100px",
+                    borderRadius: "50%",
+                    backgroundColor: "#a0a0a0",
+                    display: "flex",
+                    alignItems: "center",
+                    justifyContent: "center",
+                  }}
+                >
+                  <svg
+                    width="100"
+                    height="100"
+                    viewBox="2 2 20 20"
+                    fill="#e6e6e6"
+                  >
+                    <path d="M12 2C6.48 2 2 6.48 2 12s4.48 10 10 10 10-4.48 10-10S17.52 2 12 2zm0 3c1.66 0 3 1.34 3 3s-1.34 3-3 3-3-1.34-3-3 1.34-3 3-3zm0 14.2c-2.5 0-4.71-1.28-6-3.22.03-1.99 4-3.08 6-3.08 1.99 0 5.97 1.09 6 3.08-1.29 1.94-3.5 3.22-6 3.22z" />
+                  </svg>
+                </div>
               ) : (
                 <img
                   src={user.avatarUrl}

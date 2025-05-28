@@ -341,10 +341,10 @@ const ArchivePage = () => {
         ) : (
           <div className="w-full h-full bg-gray-400 flex items-center justify-center">
             <svg
-              width={size === "large" ? "72" : "40"}
-              height={size === "large" ? "72" : "40"}
+              width={size === "large" ? "200" : "40"}
+              height={size === "large" ? "200" : "40"}
               viewBox="2 2 20 20"
-              fill={size === "large" ? "#888" : "#e6e6e6"}
+              fill="#e6e6e6"
             >
               <path d="M12 2C6.48 2 2 6.48 2 12s4.48 10 10 10 10-4.48 10-10S17.52 2 12 2zm0 3c1.66 0 3 1.34 3 3s-1.34 3-3 3-3-1.34-3-3 1.34-3 3-3zm0 14.2c-2.5 0-4.71-1.28-6-3.22.03-1.99 4-3.08 6-3.08 1.99 0 5.97 1.09 6 3.08-1.29 1.94-3.5 3.22-6 3.22z" />
             </svg>
@@ -522,11 +522,13 @@ const ArchivePage = () => {
 
                 <button
                   onClick={handleCopyLink}
-                  className="text-black text-center text-xl mb-4 bg-white px-6 py-2 rounded-3xl
-                   shadow-sm cursor-pointer hover:bg-gray-50 transition-colors flex items-center justify-center gap-2"
+                  className="text-black text-center mb-4 bg-white px-6 py-2 rounded-3xl
+                   shadow-sm cursor-pointer hover:bg-gray-50 transition-colors flex items-center justify-center gap-2 max-w-full"
                   aria-label="Copy link to clipboard"
                 >
-                  <span>seemyarchive/{getUserRouteParam(selectedUser)}</span>
+                  <span className="truncate text-xl">
+                    seemyarchive.com/{getUserRouteParam(selectedUser)}
+                  </span>
                   <svg
                     xmlns="http://www.w3.org/2000/svg"
                     width="16"
@@ -537,7 +539,7 @@ const ArchivePage = () => {
                     strokeWidth="2"
                     strokeLinecap="round"
                     strokeLinejoin="round"
-                    className="text-gray-500"
+                    className="text-gray-500 flex-shrink-0"
                   >
                     <path d="M10 13a5 5 0 0 0 7.54.54l3-3a5 5 0 0 0-7.07-7.07l-1.72 1.71"></path>
                     <path d="M14 11a5 5 0 0 0-7.54-.54l-3 3a5 5 0 0 0 7.07 7.07l1.71-1.71"></path>
@@ -611,16 +613,11 @@ const ArchivePage = () => {
               xmlns="http://www.w3.org/2000/svg"
               width="28"
               height="28"
-              viewBox="0 0 24 24"
-              fill="none"
-              stroke="currentColor"
-              strokeWidth="2"
-              strokeLinecap="round"
-              strokeLinejoin="round"
+              viewBox="2 2 20 20"
+              fill="currentColor"
               className="mb-1 text-white"
             >
-              <line x1="5" y1="12" x2="19" y2="12"></line>
-              <polyline points="12 5 19 12 12 19"></polyline>
+              <path d="M12 2C6.48 2 2 6.48 2 12s4.48 10 10 10 10-4.48 10-10S17.52 2 12 2zm0 3c1.66 0 3 1.34 3 3s-1.34 3-3 3-3-1.34-3-3 1.34-3 3-3zm0 14.2c-2.5 0-4.71-1.28-6-3.22.03-1.99 4-3.08 6-3.08 1.99 0 5.97 1.09 6 3.08-1.29 1.94-3.5 3.22-6 3.22z" />
             </svg>
             <span className="text-sm text-white font-medium">See Profile</span>
           </Link>
