@@ -26,11 +26,11 @@ const UserProfile = () => {
   const [buttonText, setButtonText] = useState("Join Archive");
   const [isMobile, setIsMobile] = useState(window.innerWidth < 768);
 
+  // Add a new state for tracking entry loading
+  const [isLoadingEntries, setIsLoadingEntries] = useState(true);
+
   // New state to track if we have basic data (to show widgets immediately)
   const [hasBasicData, setHasBasicData] = useState(false);
-
-  // TESTING: Set to true to force loading state with placeholders
-  const FORCE_LOADING_STATE = false;
 
   // Update button text when user data is available
   useEffect(() => {
@@ -46,6 +46,8 @@ const UserProfile = () => {
   useEffect(() => {
     async function fetchUserAndEntries() {
       try {
+        setIsLoadingEntries(true); // Start loading state
+
         // Get all users and find a match regardless of case
         const usersRef = collection(db, "users_v3");
         const usersSnapshot = await getDocs(usersRef);
@@ -67,23 +69,11 @@ const UserProfile = () => {
         });
 
         if (!foundUser) {
+          setIsLoadingEntries(false);
           return;
         }
 
         setUser(foundUser);
-        // Show widgets immediately after user is found
-        setHasBasicData(true);
-
-        // TESTING: Skip data loading if in forced loading state
-        if (FORCE_LOADING_STATE) {
-          setCategorizedEntries({
-            tv: [],
-            music: [],
-            podcasts: [],
-            books: [],
-          });
-          return;
-        }
 
         // Fetch user's entries
         const entriesQuery = query(
@@ -95,13 +85,14 @@ const UserProfile = () => {
 
         if (entriesSnapshot.empty) {
           setEntries([]);
-          // Keep empty categorized entries for placeholder display
           setCategorizedEntries({
             tv: [],
             music: [],
             podcasts: [],
             books: [],
           });
+          setIsLoadingEntries(false);
+          setHasBasicData(true); // Set this after loading is complete
           return;
         }
 
@@ -185,8 +176,11 @@ const UserProfile = () => {
         });
 
         setCategorizedEntries(categorized);
+        setIsLoadingEntries(false);
+        setHasBasicData(true); // Set this after all data is loaded
       } catch (error) {
         console.error("Error fetching data:", error);
+        setIsLoadingEntries(false);
       }
     }
 
@@ -371,9 +365,8 @@ const UserProfile = () => {
         entry.status === null
     );
 
-    // Show placeholders during loading state (either forced or real loading)
-    const isLoading = FORCE_LOADING_STATE || !hasBasicData;
-    const showPlaceholders = isLoading;
+    // Update the loading check to use isLoadingEntries
+    const showPlaceholders = isLoadingEntries;
     const placeholderCount = isMobile ? 4 : isSquareGrid ? 14 : 13;
 
     return (
@@ -460,7 +453,7 @@ const UserProfile = () => {
 
   return (
     <div className="mx-auto p-5 md:p-[100px] pb-[180px] min-h-screen bg-[#f2e8d5] font-['Libre_Baskerville',_serif]">
-      {user && hasBasicData && (
+      {user && (
         <>
           {/* Profile layout with avatar above and username below */}
           <div
@@ -476,9 +469,7 @@ const UserProfile = () => {
             }}
           >
             <div>
-              {FORCE_LOADING_STATE ? (
-                <ProfilePlaceholder />
-              ) : !user.avatarUrl ? (
+              {!user.avatarUrl ? (
                 <div
                   style={{
                     width: "100px",
