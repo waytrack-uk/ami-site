@@ -193,14 +193,8 @@ const UserProfile = () => {
 
   // Background and font loading effects
   useEffect(() => {
-    document.documentElement.style.backgroundColor = "#f2e8d5";
-    document.body.style.backgroundColor = "#f2e8d5";
-
-    const libreBaskerville = document.createElement("link");
-    libreBaskerville.rel = "stylesheet";
-    libreBaskerville.href =
-      "https://fonts.googleapis.com/css2?family=Libre+Baskerville:wght@400;700&display=swap";
-    document.head.appendChild(libreBaskerville);
+    document.documentElement.style.backgroundColor = "white";
+    document.body.style.backgroundColor = "white";
 
     const sfPro = document.createElement("link");
     sfPro.rel = "stylesheet";
@@ -209,15 +203,12 @@ const UserProfile = () => {
 
     const meta = document.createElement("meta");
     meta.name = "theme-color";
-    meta.content = "#f2e8d5";
+    meta.content = "white";
     document.head.appendChild(meta);
 
     return () => {
       if (meta.parentNode) {
         document.head.removeChild(meta);
-      }
-      if (libreBaskerville.parentNode) {
-        document.head.removeChild(libreBaskerville);
       }
       if (sfPro.parentNode) {
         document.head.removeChild(sfPro);
@@ -383,7 +374,8 @@ const UserProfile = () => {
             fontSize: "20px",
             marginBottom: isSquareGrid ? "0px" : "0px",
             marginTop: "0",
-            fontFamily: "'Libre Baskerville', serif",
+            fontFamily:
+              "'SF Pro Display', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif",
             fontWeight: "bold",
             letterSpacing: "0.03em",
             textRendering: "optimizeLegibility",
@@ -452,7 +444,7 @@ const UserProfile = () => {
   };
 
   return (
-    <div className="mx-auto p-5 md:p-[100px] pb-[180px] min-h-screen bg-[#f2e8d5] font-['Libre_Baskerville',_serif]">
+    <div className="mx-auto p-5 pb-[100px] md:p-[100px] md:pb-[140px] min-h-screen bg-white font-['SF_Pro_Display',_-apple-system,_BlinkMacSystemFont,_'Segoe_UI',_Roboto,_sans-serif]">
       {user && (
         <>
           {/* Profile layout with avatar above and username below */}
@@ -509,7 +501,8 @@ const UserProfile = () => {
                 style={{
                   fontSize: "24px",
                   margin: "0",
-                  fontFamily: "'Libre Baskerville', serif",
+                  fontFamily:
+                    "'SF Pro Display', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif",
                   fontWeight: 1000,
                   letterSpacing: "0.02em",
                   textRendering: "optimizeLegibility",
@@ -565,7 +558,7 @@ const UserProfile = () => {
             bottom: 12,
             left: 0,
             width: "100%",
-            padding: "15px 0",
+            padding: "5px 0",
             textAlign: "center",
             zIndex: 1000,
             backgroundColor: "transparent",

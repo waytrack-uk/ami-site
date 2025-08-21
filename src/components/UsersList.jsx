@@ -67,6 +67,7 @@ const ArchivePage = () => {
 
         setUsers(usersData);
         setFilteredUsers(usersData);
+        // Comment out the status clear to keep loading state
         setStatus("");
       } catch (error) {
         console.error("Error fetching users:", error);
@@ -354,10 +355,39 @@ const ArchivePage = () => {
     );
   };
 
+  // Add LoadingSpinner component
+  const LoadingSpinner = () => (
+    <div className="flex justify-center items-center">
+      <div className="w-8 h-8 relative">
+        <style>
+          {`
+            @keyframes spin {
+              0% { transform: rotate(0deg); }
+              100% { transform: rotate(360deg); }
+            }
+            .loading-spinner {
+              width: 32px;
+              height: 32px;
+              border: 3px solid rgba(0, 0, 0, 0.1);
+              border-radius: 50%;
+              border-top-color: #666;
+              animation: spin 1s linear infinite;
+            }
+          `}
+        </style>
+        <div className="loading-spinner"></div>
+      </div>
+    </div>
+  );
+
   return (
     <div
-      className="min-h-screen w-full font-sans flex flex-col items-center pt-28 gap-4 px-4"
-      style={{ backgroundColor: "#f2e8d5" }}
+      className="min-h-screen w-full flex flex-col items-center pt-28 gap-4 px-4"
+      style={{
+        backgroundColor: "white",
+        fontFamily:
+          "-apple-system, BlinkMacSystemFont, 'SF Pro Display', 'SF Pro Text', system-ui, sans-serif",
+      }}
       onTouchMove={handleTouchMove}
       onTouchEnd={handleTouchEnd}
     >
@@ -367,11 +397,12 @@ const ArchivePage = () => {
           <h1
             className="text-5xl md:text-8xl text-center"
             style={{
-              fontFamily: "Baskerville, serif",
+              fontFamily:
+                "-apple-system, BlinkMacSystemFont, 'SF Pro Display', 'SF Pro Text', system-ui, sans-serif",
             }}
           >
             Find your <br />
-            Archive link.
+            archive link.
           </h1>
         </div>
       )}
@@ -435,7 +466,9 @@ const ArchivePage = () => {
 
           {/* Status message display - no shadow */}
           {status && (
-            <div className="text-gray-700 my-4 text-center">{status}</div>
+            <div className="w-full max-w-md my-4 flex justify-center">
+              <LoadingSpinner />
+            </div>
           )}
 
           {/* Users list section - no shadow */}
