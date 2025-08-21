@@ -17,20 +17,9 @@ const CategoryPage = () => {
   const buttonText = "See more on Archive!";
   const [hasFetched, setHasFetched] = useState(false);
 
-  // Function to get solid color based on category name - replacing gradient function
+  // Function to get solid color based on category name - now returns white
   const getCategoryColor = (category) => {
-    switch (category.toLowerCase()) {
-      case "books":
-        return "rgba(184, 133, 89, 1)"; // Average brown color
-      case "tv":
-        return "rgba(15, 71, 92, 1)"; // Average blue color
-      case "music":
-        return "rgba(217, 64, 77, 1)"; // Average red color
-      case "podcasts":
-        return "rgba(166, 77, 204, 1)"; // Average purple color
-      default:
-        return "rgba(34, 34, 34, 1)"; // Default dark color
-    }
+    return "white"; // All backgrounds are now white
   };
 
   // Function to normalize category name for database queries
@@ -201,24 +190,24 @@ const CategoryPage = () => {
     const originalRootBackground =
       document.getElementById("root").style.background;
 
-    // Set theme-color meta tag
+    // Set theme-color meta tag to white
     let metaThemeColor = document.querySelector('meta[name="theme-color"]');
     if (!metaThemeColor) {
       metaThemeColor = document.createElement("meta");
       metaThemeColor.name = "theme-color";
       document.head.appendChild(metaThemeColor);
     }
-    metaThemeColor.content = backgroundColor;
+    metaThemeColor.content = "white";
 
-    // Apply background color to all necessary elements
-    document.documentElement.style.background = backgroundColor;
-    document.body.style.background = backgroundColor;
-    document.getElementById("root").style.background = backgroundColor;
+    // Apply white background to all necessary elements
+    document.documentElement.style.background = "white";
+    document.body.style.background = "white";
+    document.getElementById("root").style.background = "white";
 
     // Cleanup function
     return () => {
       if (metaThemeColor) {
-        metaThemeColor.content = "#f2e8d5";
+        metaThemeColor.content = "white";
       }
       document.documentElement.style.background = originalHtmlBackground;
       document.body.style.background = originalBodyBackground;
@@ -503,25 +492,26 @@ const CategoryPage = () => {
           left: 0,
           right: 0,
           height: "env(safe-area-inset-top, 0px)",
-          backgroundColor: backgroundColor,
+          backgroundColor: "white",
           zIndex: 999,
         }}
       />
 
       {/* Main container - always maintain desktop layout */}
       <div
-        className="font-serif"
         style={{
           margin: "0 auto",
           width: "100%",
-          color: "white",
+          color: "#111", // Dark text on white background
           minHeight: "100vh",
-          background: backgroundColor,
+          background: "white",
           position: "relative",
           paddingTop: "env(safe-area-inset-top, 0px)",
           display: "flex",
           flexDirection: "column",
           alignItems: isDesktop ? "center" : "stretch",
+          fontFamily:
+            "'SF Pro Display', 'SF Pro Text', -apple-system, BlinkMacSystemFont, sans-serif",
         }}
       >
         {/* Content wrapper - force consistent width */}
@@ -546,7 +536,7 @@ const CategoryPage = () => {
             <Link
               to={username ? `/${username}` : "/"}
               style={{
-                color: "white",
+                color: "#111", // Dark color for visibility on white
                 textDecoration: "none",
                 display: "block",
                 padding: "10px",
@@ -561,7 +551,7 @@ const CategoryPage = () => {
               >
                 <path
                   d="M10 2L2 10.5L10 19"
-                  stroke="white"
+                  stroke="#111" // Dark stroke for visibility
                   strokeWidth="2"
                   strokeLinecap="round"
                   strokeLinejoin="round"
@@ -575,8 +565,9 @@ const CategoryPage = () => {
             style={{
               fontSize: "36px",
               fontWeight: "bold",
-              fontFamily: "Baskerville, serif",
-              color: "white",
+              fontFamily:
+                "'SF Pro Display', 'SF Pro Text', -apple-system, BlinkMacSystemFont, sans-serif",
+              color: "#111", // Dark text
               margin: "20px 0 20px 0",
               textAlign: "left",
             }}
@@ -588,9 +579,11 @@ const CategoryPage = () => {
             <p
               style={{
                 fontSize: "16px",
-                color: "white",
-                opacity: 0.8,
+                color: "#111",
+                opacity: 0.6,
                 textAlign: "center",
+                fontFamily:
+                  "'SF Pro Display', 'SF Pro Text', -apple-system, BlinkMacSystemFont, sans-serif",
               }}
             >
               No {categoryName} archived yet...
@@ -607,8 +600,9 @@ const CategoryPage = () => {
                         style={{
                           fontSize: "20px",
                           fontWeight: "bold",
-                          fontFamily: "Baskerville, serif",
-                          color: "white",
+                          fontFamily:
+                            "'SF Pro Display', 'SF Pro Text', -apple-system, BlinkMacSystemFont, sans-serif",
+                          color: "#111",
                           margin: "20px 0 5px 0",
                         }}
                       >
@@ -618,10 +612,10 @@ const CategoryPage = () => {
                       <p
                         style={{
                           fontSize: "12px",
-                          opacity: "0.8",
-                          color: "white",
+                          opacity: "0.6",
+                          color: "#111",
                           fontFamily:
-                            "-apple-system, BlinkMacSystemFont, 'SF Pro Text', 'Segoe UI', Roboto, Helvetica, Arial, sans-serif",
+                            "'SF Pro Display', 'SF Pro Text', -apple-system, BlinkMacSystemFont, sans-serif",
                           margin: "0 0 15px 0",
                         }}
                       >
@@ -641,7 +635,7 @@ const CategoryPage = () => {
                                 borderRadius: "8px",
                                 overflow: "hidden",
                                 flexShrink: 0,
-                                backgroundColor: "rgba(255, 255, 255, 0.1)", // Loading background
+                                backgroundColor: "rgba(0, 0, 0, 0.05)", // Light gray loading background
                               }}
                             >
                               {/* Show loading state until image loads */}
@@ -652,8 +646,7 @@ const CategoryPage = () => {
                                       position: "absolute",
                                       width: "100%",
                                       height: "100%",
-                                      backgroundColor:
-                                        "rgba(255, 255, 255, 0.1)",
+                                      backgroundColor: "rgba(0, 0, 0, 0.05)",
                                     }}
                                   />
                                 )}
@@ -671,7 +664,7 @@ const CategoryPage = () => {
                                   backgroundPosition: "center",
                                   backgroundColor: entry.thumbnailUrl
                                     ? "transparent"
-                                    : "rgba(255, 255, 255, 0.2)",
+                                    : "rgba(0, 0, 0, 0.1)",
                                   opacity: loadedImages.has(entry.id) ? 1 : 0,
                                   transition: "opacity 0.3s ease",
                                 }}
@@ -708,7 +701,7 @@ const CategoryPage = () => {
                                     fontSize: "14px",
                                     margin: "0 0 1px 0",
                                     fontFamily:
-                                      "-apple-system, BlinkMacSystemFont, 'SF Pro Text', 'Segoe UI', Roboto, Helvetica, Arial, sans-serif",
+                                      "'SF Pro Display', 'SF Pro Text', -apple-system, BlinkMacSystemFont, sans-serif",
                                     fontWeight: "500",
                                     color: "white",
                                     textShadow: "0px 1px 2px rgba(0,0,0,0.5)",
@@ -728,7 +721,7 @@ const CategoryPage = () => {
                                     fontSize: "12px",
                                     margin: "0",
                                     fontFamily:
-                                      "-apple-system, BlinkMacSystemFont, 'SF Pro Text', 'Segoe UI', Roboto, Helvetica, Arial, sans-serif",
+                                      "'SF Pro Display', 'SF Pro Text', -apple-system, BlinkMacSystemFont, sans-serif",
                                     color: "white",
                                     opacity: "0.9",
                                     textShadow: "0px 1px 2px rgba(0,0,0,0.5)",
@@ -759,8 +752,9 @@ const CategoryPage = () => {
                         style={{
                           fontSize: "20px",
                           fontWeight: "bold",
-                          fontFamily: "Baskerville, serif",
-                          color: "white",
+                          fontFamily:
+                            "'SF Pro Display', 'SF Pro Text', -apple-system, BlinkMacSystemFont, sans-serif",
+                          color: "#111",
                           margin: "20px 0 7px 0",
                         }}
                       >
@@ -795,14 +789,14 @@ const CategoryPage = () => {
                                   marginBottom: "4px", // Small gap between image and text
                                   opacity: loadedImages.has(entry.id) ? 1 : 0,
                                   transition: "opacity 0.3s ease",
-                                  backgroundColor: "rgba(255, 255, 255, 0.1)", // Loading background
+                                  backgroundColor: "rgba(0, 0, 0, 0.05)", // Light loading background
                                 }}
                                 onLoad={() => handleImageLoad(entry.id)}
                                 onError={(e) => {
                                   // Fallback for missing images
                                   e.target.onerror = null;
                                   e.target.style.backgroundColor =
-                                    "rgba(255, 255, 255, 0.2)";
+                                    "rgba(0, 0, 0, 0.1)";
                                 }}
                               />
 
@@ -813,9 +807,9 @@ const CategoryPage = () => {
                                   margin: "6px 0 1px 0",
                                   padding: "0 2px",
                                   fontFamily:
-                                    "-apple-system, BlinkMacSystemFont, 'SF Pro Text', 'Segoe UI', Roboto, Helvetica, Arial, sans-serif",
+                                    "'SF Pro Display', 'SF Pro Text', -apple-system, BlinkMacSystemFont, sans-serif",
                                   fontWeight: "500",
-                                  color: "white",
+                                  color: "#111",
                                   lineHeight: "1.2",
                                   textAlign: "center",
                                   width: "100%",
@@ -831,10 +825,9 @@ const CategoryPage = () => {
                                     margin: "0",
                                     padding: "0 2px",
                                     fontFamily:
-                                      "-apple-system, BlinkMacSystemFont, 'SF Pro Text', 'Segoe UI', Roboto, Helvetica, Arial, sans-serif",
-                                    color: "white",
-                                    opacity: "0.8",
-                                    textShadow: "0px 1px 2px rgba(0,0,0,0.5)",
+                                      "'SF Pro Display', 'SF Pro Text', -apple-system, BlinkMacSystemFont, sans-serif",
+                                    color: "#111",
+                                    opacity: "0.6",
                                     lineHeight: "1.2",
                                     textAlign: "center",
                                     width: "100%",
@@ -861,8 +854,9 @@ const CategoryPage = () => {
                         style={{
                           fontSize: "20px",
                           fontWeight: "bold",
-                          fontFamily: "Baskerville, serif",
-                          color: "white",
+                          fontFamily:
+                            "'SF Pro Display', 'SF Pro Text', -apple-system, BlinkMacSystemFont, sans-serif",
+                          color: "#111",
                           margin: "20px 0 7px 0",
                         }}
                       >
@@ -897,14 +891,14 @@ const CategoryPage = () => {
                                   marginBottom: "4px", // Small gap between image and text
                                   opacity: loadedImages.has(entry.id) ? 1 : 0,
                                   transition: "opacity 0.3s ease",
-                                  backgroundColor: "rgba(255, 255, 255, 0.1)", // Loading background
+                                  backgroundColor: "rgba(0, 0, 0, 0.05)", // Light loading background
                                 }}
                                 onLoad={() => handleImageLoad(entry.id)}
                                 onError={(e) => {
                                   // Fallback for missing images
                                   e.target.onerror = null;
                                   e.target.style.backgroundColor =
-                                    "rgba(255, 255, 255, 0.2)";
+                                    "rgba(0, 0, 0, 0.1)";
                                 }}
                               />
 
@@ -915,9 +909,9 @@ const CategoryPage = () => {
                                   margin: "6px 0 1px 0",
                                   padding: "0 2px",
                                   fontFamily:
-                                    "-apple-system, BlinkMacSystemFont, 'SF Pro Text', 'Segoe UI', Roboto, Helvetica, Arial, sans-serif",
+                                    "'SF Pro Display', 'SF Pro Text', -apple-system, BlinkMacSystemFont, sans-serif",
                                   fontWeight: "500",
-                                  color: "white",
+                                  color: "#111",
                                   lineHeight: "1.2",
                                   textAlign: "center",
                                   width: "100%",
@@ -933,10 +927,9 @@ const CategoryPage = () => {
                                     margin: "0",
                                     padding: "0 2px",
                                     fontFamily:
-                                      "-apple-system, BlinkMacSystemFont, 'SF Pro Text', 'Segoe UI', Roboto, Helvetica, Arial, sans-serif",
-                                    color: "white",
-                                    opacity: "0.8",
-                                    textShadow: "0px 1px 2px rgba(0,0,0,0.5)",
+                                      "'SF Pro Display', 'SF Pro Text', -apple-system, BlinkMacSystemFont, sans-serif",
+                                    color: "#111",
+                                    opacity: "0.6",
                                     lineHeight: "1.2",
                                     textAlign: "center",
                                     width: "100%",
@@ -963,8 +956,9 @@ const CategoryPage = () => {
                         style={{
                           fontSize: "20px",
                           fontWeight: "bold",
-                          fontFamily: "Baskerville, serif",
-                          color: "white",
+                          fontFamily:
+                            "'SF Pro Display', 'SF Pro Text', -apple-system, BlinkMacSystemFont, sans-serif",
+                          color: "#111",
                           margin: "20px 0 10px 0",
                         }}
                       >
@@ -977,9 +971,10 @@ const CategoryPage = () => {
                           <h3
                             style={{
                               fontSize: "16px",
-                              color: "rgba(255, 255, 255, 0.8)",
+                              color: "rgba(17, 17, 17, 0.6)",
                               marginBottom: "6px",
-                              fontFamily: "Baskerville, serif",
+                              fontFamily:
+                                "'SF Pro Display', 'SF Pro Text', -apple-system, BlinkMacSystemFont, sans-serif",
                               fontWeight: "bold",
                             }}
                           >
@@ -990,7 +985,7 @@ const CategoryPage = () => {
                           <div
                             style={{
                               height: "1px",
-                              backgroundColor: "rgba(255, 255, 255, 0.15)",
+                              backgroundColor: "rgba(17, 17, 17, 0.1)",
                               width: "100%",
                               marginBottom: "2px", // Add space after the divider
                             }}
@@ -1023,7 +1018,7 @@ const CategoryPage = () => {
                                           width: "45px",
                                           height: "45px",
                                           backgroundColor:
-                                            "rgba(255, 255, 255, 0.1)", // Loading background
+                                            "rgba(0, 0, 0, 0.05)", // Light loading background
                                           borderRadius: "4px",
                                         }}
                                       >
@@ -1053,15 +1048,19 @@ const CategoryPage = () => {
                                         style={{
                                           width: "45px",
                                           height: "45px",
-                                          backgroundColor:
-                                            "rgba(255, 255, 255, 0.2)",
+                                          backgroundColor: "rgba(0, 0, 0, 0.1)",
                                           borderRadius: "4px",
                                           display: "flex",
                                           alignItems: "center",
                                           justifyContent: "center",
                                         }}
                                       >
-                                        <span style={{ fontSize: "16px" }}>
+                                        <span
+                                          style={{
+                                            fontSize: "16px",
+                                            color: "#111",
+                                          }}
+                                        >
                                           ?
                                         </span>
                                       </div>
@@ -1075,9 +1074,9 @@ const CategoryPage = () => {
                                         fontSize: "14px",
                                         margin: "0 0 1px 0",
                                         fontFamily:
-                                          "-apple-system, BlinkMacSystemFont, 'SF Pro Text', 'Segoe UI', Roboto, Helvetica, Arial, sans-serif",
+                                          "'SF Pro Display', 'SF Pro Text', -apple-system, BlinkMacSystemFont, sans-serif",
                                         fontWeight: "500",
-                                        color: "white",
+                                        color: "#111",
                                         lineHeight: "1.2",
                                         display: "-webkit-box",
                                         WebkitLineClamp: "2",
@@ -1095,9 +1094,9 @@ const CategoryPage = () => {
                                         alignItems: "center",
                                         fontSize: "12px",
                                         margin: "0",
-                                        opacity: "0.7",
+                                        opacity: "0.6",
                                         fontFamily:
-                                          "-apple-system, BlinkMacSystemFont, 'SF Pro Text', 'Segoe UI', Roboto, Helvetica, Arial, sans-serif",
+                                          "'SF Pro Display', 'SF Pro Text', -apple-system, BlinkMacSystemFont, sans-serif",
                                       }}
                                     >
                                       {/* Creator name */}
@@ -1118,7 +1117,7 @@ const CategoryPage = () => {
                                             marginLeft: "8px",
                                             fontSize: "12px",
                                             opacity: "1", // Make it a bit more visible
-                                            color: "white",
+                                            color: "#111",
                                             display: "flex",
                                             alignItems: "center",
                                           }}
@@ -1148,8 +1147,7 @@ const CategoryPage = () => {
                                   <div
                                     style={{
                                       height: "1px",
-                                      backgroundColor:
-                                        "rgba(255, 255, 255, 0.15)",
+                                      backgroundColor: "rgba(17, 17, 17, 0.1)",
                                       width: "calc(100% - 60px)", // Adjust width based on thumbnail (50px) + right margin (12px)
                                       marginLeft: "58px", // Equal to thumbnail width (50px) + right margin (12px)
                                     }}
@@ -1195,8 +1193,8 @@ const CategoryPage = () => {
           >
             <button
               style={{
-                backgroundColor: "white",
-                color: "#111",
+                backgroundColor: "#111", // Dark button on white background
+                color: "white",
                 border: "none",
                 borderRadius: "20px",
                 padding: "10px 20px",
@@ -1208,7 +1206,7 @@ const CategoryPage = () => {
                 justifyContent: "center",
                 gap: "6px",
                 fontFamily:
-                  "'SF Pro Display', 'SF Pro Text', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Oxygen, Ubuntu, Cantarell, 'Open Sans', 'Helvetica Neue', sans-serif",
+                  "'SF Pro Display', 'SF Pro Text', -apple-system, BlinkMacSystemFont, sans-serif",
                 fontWeight: 500,
               }}
             >
@@ -1217,6 +1215,7 @@ const CategoryPage = () => {
                 alt="Apple logo"
                 style={{
                   height: "16px",
+                  filter: "invert(1)", // Invert the logo to white
                 }}
               />
               {buttonText}
@@ -1233,7 +1232,7 @@ const CategoryPage = () => {
           left: 0,
           right: 0,
           height: "env(safe-area-inset-bottom, 0px)",
-          backgroundColor: backgroundColor,
+          backgroundColor: "white",
           zIndex: 999,
         }}
       />
