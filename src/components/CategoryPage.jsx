@@ -14,7 +14,7 @@ const CategoryPage = () => {
   const [isDesktop, setIsDesktop] = useState(false);
   const [showDownloadButton, setShowDownloadButton] = useState(true);
   const [loadedImages, setLoadedImages] = useState(new Set());
-  const buttonText = "See more on Archive!";
+  const buttonText = "See more on Ami!";
   const [hasFetched, setHasFetched] = useState(false);
 
   // Function to get solid color based on category name - now returns white
@@ -470,11 +470,6 @@ const CategoryPage = () => {
     paddingLeft: "20px",
     paddingRight: "20px",
     paddingBottom: "100px",
-    ...(isDesktop && {
-      maxWidth: "1000px",
-      marginLeft: "auto",
-      marginRight: "auto",
-    }),
   };
 
   // Helper function to handle image load
@@ -500,79 +495,47 @@ const CategoryPage = () => {
       {/* Main container - always maintain desktop layout */}
       <div
         style={{
-          margin: "0 auto",
           width: "100%",
-          color: "#111", // Dark text on white background
           minHeight: "100vh",
           background: "white",
-          position: "relative",
-          paddingTop: "env(safe-area-inset-top, 0px)",
           display: "flex",
-          flexDirection: "column",
-          alignItems: isDesktop ? "center" : "stretch",
-          fontFamily:
-            "'SF Pro Display', 'SF Pro Text', -apple-system, BlinkMacSystemFont, sans-serif",
+          justifyContent: "center",
         }}
       >
-        {/* Content wrapper - force consistent width */}
         <div
           style={{
-            width: isDesktop ? "1000px" : "100%",
-            paddingLeft: "20px",
-            paddingRight: "20px",
-            paddingTop: "65px",
-            paddingBottom: "100px",
+            width: "100%",
+            maxWidth: "375px",
+            color: "#111",
+            position: "relative",
+            paddingTop: "env(safe-area-inset-top, 0px)",
+            fontFamily:
+              "'SF Pro Display', 'SF Pro Text', -apple-system, BlinkMacSystemFont, sans-serif",
           }}
         >
-          {/* Back button */}
+          {/* Content wrapper */}
           <div
             style={{
-              position: "absolute",
-              top: "16px",
-              left: isDesktop ? "calc((100% - 1000px)/2 + 15px)" : "15px",
-              zIndex: "2",
+              width: "100%",
+              paddingLeft: "20px",
+              paddingRight: "20px",
+              paddingTop: "65px",
+              paddingBottom: "100px",
             }}
           >
-            <Link
-              to={username ? `/${username}` : "/"}
-              style={{
-                color: "#111", // Dark color for visibility on white
-                textDecoration: "none",
-                display: "block",
-                padding: "10px",
-              }}
-            >
-              <svg
-                width="12"
-                height="21"
-                viewBox="0 0 12 21"
-                fill="none"
-                xmlns="http://www.w3.org/2000/svg"
-              >
-                <path
-                  d="M10 2L2 10.5L10 19"
-                  stroke="#111" // Dark stroke for visibility
-                  strokeWidth="2"
-                  strokeLinecap="round"
-                  strokeLinejoin="round"
-                />
-              </svg>
-            </Link>
-          </div>
-
-          {/* Title and content - always left aligned */}
+          {/* Title */}
           <h1
             style={{
               fontSize: "36px",
               fontWeight: "bold",
               fontFamily:
                 "'SF Pro Display', 'SF Pro Text', -apple-system, BlinkMacSystemFont, sans-serif",
-              color: "#111", // Dark text
+              color: "#111",
               margin: "20px 0 20px 0",
               textAlign: "left",
             }}
           >
-            {formatCategoryName(categoryName)}
+            {userData ? `${getPossessiveName(userData.fullName || userData.username)} ${formatCategoryName(categoryName)}` : formatCategoryName(categoryName)}
           </h1>
 
           {hasFetched && entries.length === 0 ? (
@@ -1164,6 +1127,7 @@ const CategoryPage = () => {
               )}
             </div>
           )}
+          </div>
         </div>
       </div>
 
@@ -1196,7 +1160,7 @@ const CategoryPage = () => {
                 backgroundColor: "#111", // Dark button on white background
                 color: "white",
                 border: "none",
-                borderRadius: "20px",
+                borderRadius: "30px",
                 padding: "10px 20px",
                 fontSize: "18px",
                 cursor: "pointer",

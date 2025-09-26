@@ -23,7 +23,7 @@ const UserProfile = () => {
     books: [],
   });
   const [showDownloadButton, setShowDownloadButton] = useState(true);
-  const [buttonText, setButtonText] = useState("Join Archive");
+  const [buttonText, setButtonText] = useState("Join on Ami");
   const [isMobile, setIsMobile] = useState(window.innerWidth < 768);
 
   // Add a new state for tracking entry loading
@@ -35,11 +35,11 @@ const UserProfile = () => {
   // Update button text when user data is available
   useEffect(() => {
     if (user && user.fullName) {
-      setButtonText(`Join ${user.fullName} on Archive`);
+      setButtonText(`Join ${user.fullName} on Ami`);
     } else if (user && user.username) {
-      setButtonText(`Join ${user.username} on Archive`);
+      setButtonText(`Join ${user.username} on Ami`);
     } else {
-      setButtonText("Join Archive");
+      setButtonText("Join on Ami");
     }
   }, [user]);
 
@@ -327,13 +327,9 @@ const UserProfile = () => {
 
     const gridStyle = {
       display: "grid",
-      gridTemplateColumns: isMobile
-        ? isSquareGrid
-          ? "repeat(2, 65px)"
-          : "repeat(4, 75px)"
-        : isSquareGrid
-        ? "repeat(7, 60px)"
-        : "repeat(13, 70px)",
+      gridTemplateColumns: isSquareGrid
+        ? "repeat(2, 65px)"
+        : "repeat(4, 75px)",
       gridTemplateRows: isSquareGrid ? "repeat(2, 1fr)" : "1fr",
       gridAutoRows: "1fr",
       gridAutoFlow: isSquareGrid ? "row" : "column",
@@ -342,11 +338,11 @@ const UserProfile = () => {
       flex: "1",
       overflow: "hidden",
       marginTop: isSquareGrid ? "2px" : "5px",
-      marginLeft: isMobile ? "0" : "18px",
-      justifyContent: isMobile ? "center" : "start",
+      marginLeft: "0",
+      justifyContent: "center",
     };
 
-    const displayLimit = isMobile ? 4 : 13;
+    const displayLimit = 4;
 
     const completedEntries = entries.filter(
       (entry) =>
@@ -358,7 +354,7 @@ const UserProfile = () => {
 
     // Update the loading check to use isLoadingEntries
     const showPlaceholders = isLoadingEntries;
-    const placeholderCount = isMobile ? 4 : isSquareGrid ? 14 : 13;
+    const placeholderCount = isSquareGrid ? 4 : 4;
 
     return (
       <div
@@ -444,7 +440,8 @@ const UserProfile = () => {
   };
 
   return (
-    <div className="mx-auto p-5 pb-[100px] md:p-[100px] md:pb-[140px] min-h-screen bg-white font-['SF_Pro_Display',_-apple-system,_BlinkMacSystemFont,_'Segoe_UI',_Roboto,_sans-serif]">
+    <div className="min-h-screen bg-white flex justify-center">
+      <div className="w-full max-w-[375px] p-5 pb-[100px] font-['SF_Pro_Display',_-apple-system,_BlinkMacSystemFont,_'Segoe_UI',_Roboto,_sans-serif]">
       {user && (
         <>
           {/* Profile layout with avatar above and username below */}
@@ -583,7 +580,7 @@ const UserProfile = () => {
                 backgroundColor: "white",
                 color: "#111",
                 border: "none",
-                borderRadius: "20px",
+                borderRadius: "30px",
                 padding: "10px 20px",
                 fontSize: "18px",
                 cursor: "pointer",
@@ -609,6 +606,7 @@ const UserProfile = () => {
           </a>
         </div>
       )}
+      </div>
     </div>
   );
 };
