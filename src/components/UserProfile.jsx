@@ -23,7 +23,7 @@ const UserProfile = () => {
     books: [],
   });
   const [showDownloadButton, setShowDownloadButton] = useState(true);
-  const [buttonText, setButtonText] = useState("Join Archive");
+  const [buttonText, setButtonText] = useState("Join on Ami");
   const [isMobile, setIsMobile] = useState(window.innerWidth < 768);
 
   // Add a new state for tracking entry loading
@@ -35,11 +35,11 @@ const UserProfile = () => {
   // Update button text when user data is available
   useEffect(() => {
     if (user && user.fullName) {
-      setButtonText(`Join ${user.fullName} on Archive`);
+      setButtonText(`Join ${user.fullName} on Ami`);
     } else if (user && user.username) {
-      setButtonText(`Join ${user.username} on Archive`);
+      setButtonText(`Join ${user.username} on Ami`);
     } else {
-      setButtonText("Join Archive");
+      setButtonText("Join on Ami");
     }
   }, [user]);
 
@@ -327,13 +327,9 @@ const UserProfile = () => {
 
     const gridStyle = {
       display: "grid",
-      gridTemplateColumns: isMobile
-        ? isSquareGrid
-          ? "repeat(2, 65px)"
-          : "repeat(4, 75px)"
-        : isSquareGrid
-        ? "repeat(7, 60px)"
-        : "repeat(13, 70px)",
+      gridTemplateColumns: isSquareGrid
+        ? "repeat(2, 65px)"
+        : "repeat(4, 75px)",
       gridTemplateRows: isSquareGrid ? "repeat(2, 1fr)" : "1fr",
       gridAutoRows: "1fr",
       gridAutoFlow: isSquareGrid ? "row" : "column",
@@ -342,11 +338,11 @@ const UserProfile = () => {
       flex: "1",
       overflow: "hidden",
       marginTop: isSquareGrid ? "2px" : "5px",
-      marginLeft: isMobile ? "0" : "18px",
-      justifyContent: isMobile ? "center" : "start",
+      marginLeft: "0",
+      justifyContent: "center",
     };
 
-    const displayLimit = isMobile ? 4 : 13;
+    const displayLimit = 4;
 
     const completedEntries = entries.filter(
       (entry) =>
@@ -358,7 +354,7 @@ const UserProfile = () => {
 
     // Update the loading check to use isLoadingEntries
     const showPlaceholders = isLoadingEntries;
-    const placeholderCount = isMobile ? 4 : isSquareGrid ? 14 : 13;
+    const placeholderCount = isSquareGrid ? 4 : 4;
 
     return (
       <div
@@ -444,7 +440,8 @@ const UserProfile = () => {
   };
 
   return (
-    <div className="mx-auto p-5 pb-[100px] md:p-[100px] md:pb-[140px] min-h-screen bg-white font-['SF_Pro_Display',_-apple-system,_BlinkMacSystemFont,_'Segoe_UI',_Roboto,_sans-serif]">
+    <div className="min-h-screen bg-white flex justify-center">
+      <div className="w-full max-w-[375px] p-5 pb-[100px] font-['SF_Pro_Display',_-apple-system,_BlinkMacSystemFont,_'Segoe_UI',_Roboto,_sans-serif]">
       {user && (
         <>
           {/* Profile layout with avatar above and username below */}
@@ -467,19 +464,24 @@ const UserProfile = () => {
                     width: "100px",
                     height: "100px",
                     borderRadius: "50%",
-                    backgroundColor: "#a0a0a0",
+                    backgroundColor: "rgba(209, 213, 219, 0.3)",
                     display: "flex",
                     alignItems: "center",
                     justifyContent: "center",
+                    overflow: "hidden"
                   }}
                 >
                   <svg
                     width="100"
                     height="100"
-                    viewBox="2 2 20 20"
-                    fill="#e6e6e6"
+                    viewBox="0 0 24 24"
+                    fill="currentColor"
+                    className="text-gray-500"
+                    style={{ 
+                      transform: "translateY(12px) scale(1.3)" 
+                    }}
                   >
-                    <path d="M12 2C6.48 2 2 6.48 2 12s4.48 10 10 10 10-4.48 10-10S17.52 2 12 2zm0 3c1.66 0 3 1.34 3 3s-1.34 3-3 3-3-1.34-3-3 1.34-3 3-3zm0 14.2c-2.5 0-4.71-1.28-6-3.22.03-1.99 4-3.08 6-3.08 1.99 0 5.97 1.09 6 3.08-1.29 1.94-3.5 3.22-6 3.22z" />
+                    <path d="M12 4C13.0609 4 14.0783 4.42143 14.8284 5.17157C15.5786 5.92172 16 6.93913 16 8C16 9.06087 15.5786 10.0783 14.8284 10.8284C14.0783 11.5786 13.0609 12 12 12C10.9391 12 9.92172 11.5786 9.17157 10.8284C8.42143 10.0783 8 9.06087 8 8C8 6.93913 8.42143 5.92172 9.17157 5.17157C9.92172 4.42143 10.9391 4 12 4ZM12 14C16.42 14 20 15.79 20 18V20H4V18C4 15.79 7.58 14 12 14Z" />
                   </svg>
                 </div>
               ) : (
@@ -578,7 +580,7 @@ const UserProfile = () => {
                 backgroundColor: "white",
                 color: "#111",
                 border: "none",
-                borderRadius: "20px",
+                borderRadius: "30px",
                 padding: "10px 20px",
                 fontSize: "18px",
                 cursor: "pointer",
@@ -604,6 +606,7 @@ const UserProfile = () => {
           </a>
         </div>
       )}
+      </div>
     </div>
   );
 };
