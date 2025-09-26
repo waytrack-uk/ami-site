@@ -382,7 +382,7 @@ const ArchivePage = () => {
 
   return (
     <div
-      className="min-h-screen w-full flex flex-col items-center pt-44 gap-2 px-4"
+      className="min-h-screen w-full flex flex-col items-center pt-44 gap-2 px-4 relative"
       style={{
         backgroundColor: "white",
         fontFamily:
@@ -657,7 +657,17 @@ const ArchivePage = () => {
       {/* Footer */}
       <footer className="w-screen mt-auto -mx-4" style={{ backgroundColor: '#f2f2f2' }}>
         <div className="w-full px-6 py-3">
-          <div className="flex justify-end items-center">
+          <div className="flex justify-between items-center">
+            <div className="flex space-x-6">
+              <a 
+                href="https://apps.apple.com/gb/app/archive-be-curious/id6738609084"
+                className="text-sm text-gray-800 hover:underline"
+                target="_blank"
+                rel="noopener noreferrer"
+              >
+                Download
+              </a>
+            </div>
             <div className="flex space-x-6">
               <Link 
                 to="/privacy" 
@@ -670,6 +680,12 @@ const ArchivePage = () => {
                 className="text-sm text-gray-800 hover:underline"
               >
                 Terms
+              </Link>
+              <Link 
+                to="/contact" 
+                className="text-sm text-gray-800 hover:underline"
+              >
+                Contact
               </Link>
             </div>
           </div>
