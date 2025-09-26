@@ -654,8 +654,27 @@ const ArchivePage = () => {
         </div>
       )}
 
-      {/* Extra space at the bottom of the page */}
-      <div className="h-16"></div>
+      {/* Footer */}
+      <footer className="w-screen mt-auto -mx-4" style={{ backgroundColor: '#f2f2f2' }}>
+        <div className="w-full px-6 py-3">
+          <div className="flex justify-end items-center">
+            <div className="flex space-x-6">
+              <Link 
+                to="/privacy" 
+                className="text-sm text-gray-800 hover:underline"
+              >
+                Privacy
+              </Link>
+              <Link 
+                to="/terms" 
+                className="text-sm text-gray-800 hover:underline"
+              >
+                Terms
+              </Link>
+            </div>
+          </div>
+        </div>
+      </footer>
     </div>
   );
 };
