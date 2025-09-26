@@ -8,7 +8,7 @@ const ArchivePage = () => {
   
   // State variables
   const [users, setUsers] = useState([]);
-  const [status, setStatus] = useState("Loading...");
+  const [status, setStatus] = useState("");
   const [searchTerm, setSearchTerm] = useState("");
   const [filteredUsers, setFilteredUsers] = useState([]);
   const [hasSearched, setHasSearched] = useState(false);
@@ -168,7 +168,7 @@ const ArchivePage = () => {
         <div className="relative w-full max-w-xl">
           <input
             type="text"
-            placeholder="username"
+            placeholder="Username"
             className="w-full py-4 pl-12 pr-10 border border-gray-300 rounded-full bg-white focus:outline-none text-black md:shadow"
             value={searchTerm}
             onChange={handleSearchChange}
