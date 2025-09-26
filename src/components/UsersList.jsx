@@ -382,7 +382,7 @@ const ArchivePage = () => {
 
   return (
     <div
-      className="min-h-screen w-full flex flex-col items-center pt-28 gap-4 px-4"
+      className="min-h-screen w-full flex flex-col items-center pt-44 gap-2 px-4"
       style={{
         backgroundColor: "white",
         fontFamily:
@@ -394,34 +394,31 @@ const ArchivePage = () => {
       {/* Only show the title when no user is selected */}
       {!selectedUser && (
         <div className="mb-3">
-          <h1
-            className="text-5xl md:text-8xl text-center"
-            style={{
-              fontFamily:
-                "-apple-system, BlinkMacSystemFont, 'SF Pro Display', 'SF Pro Text', system-ui, sans-serif",
-            }}
-          >
-            Find your <br />
-            archive link.
-          </h1>
+          <img 
+            src="/logo.png" 
+            alt="Logo" 
+            className="w-24 h-24 md:w-32 md:h-32 mx-auto"
+          />
         </div>
       )}
 
       {/* Search bar only, no colored widget */}
       {!selectedUser ? (
-        <div className="flex flex-col items-center w-full max-w-md md:max-w-[48rem]">
-          <div className="relative w-full max-w-sm md:max-w-[48rem]">
+        <div className="flex flex-col items-center w-full max-w-xl">
+          <div className="relative w-full max-w-xl">
             <input
               type="text"
-              placeholder="Type your username..."
-              className="w-full py-3 pl-12 pr-10 border border-gray-300 rounded-full bg-white focus:outline-none text-black md:shadow-md"
+              placeholder="username"
+              className="w-full py-4 pl-12 pr-10 border border-gray-300 rounded-full bg-white focus:outline-none text-black md:shadow"
               value={searchTerm}
               onChange={handleSearchChange}
               ref={searchInputRef}
+              autoComplete="off"
+              data-1p-ignore="true"
             />
             <div className="absolute inset-y-0 left-0 flex items-center pl-4 pointer-events-none">
               <svg
-                className="w-5 h-5 text-gray-400"
+                className="w-4 h-4 text-gray-400"
                 fill="none"
                 stroke="currentColor"
                 viewBox="0 0 24 24"
@@ -441,18 +438,18 @@ const ArchivePage = () => {
               <div className="absolute inset-y-0 right-0 flex items-center pr-4">
                 <button
                   onClick={handleClearSearch}
-                  className="rounded-full flex items-center justify-center text-white transition-colors bg-gray-400"
+                  className="flex items-center justify-center text-gray-800 transition-colors"
                   style={{ width: "1.125rem", height: "1.125rem" }}
                   aria-label="Clear search"
                 >
                   <svg
                     xmlns="http://www.w3.org/2000/svg"
-                    width="12"
-                    height="12"
+                    width="20"
+                    height="20"
                     viewBox="0 0 24 24"
                     fill="none"
                     stroke="currentColor"
-                    strokeWidth="2"
+                    strokeWidth="3"
                     strokeLinecap="round"
                     strokeLinejoin="round"
                   >
