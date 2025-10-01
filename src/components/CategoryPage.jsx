@@ -523,7 +523,7 @@ const CategoryPage = () => {
               width: "100%",
               paddingLeft: "20px",
               paddingRight: "20px",
-              paddingTop: "65px",
+              paddingTop: "20px",
               paddingBottom: "100px",
             }}
           >
@@ -535,7 +535,7 @@ const CategoryPage = () => {
               fontFamily:
                 "'SF Pro Display', 'SF Pro Text', -apple-system, BlinkMacSystemFont, sans-serif",
               color: "#111",
-              margin: "20px 0 20px 0",
+              margin: "10px 0 20px 0",
               textAlign: "left",
             }}
           >
