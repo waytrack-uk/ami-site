@@ -1045,11 +1045,7 @@ const CategoryPage = () => {
                                         fontWeight: "500",
                                         color: "#111",
                                         lineHeight: "1.2",
-                                        display: "-webkit-box",
-                                        WebkitLineClamp: "2",
-                                        WebkitBoxOrient: "vertical",
-                                        overflow: "hidden",
-                                        textOverflow: "ellipsis",
+                                        wordBreak: "break-word",
                                       }}
                                     >
                                       {entry.title || "Untitled Entry"}
@@ -1057,36 +1053,26 @@ const CategoryPage = () => {
 
                                     <div
                                       style={{
-                                        display: "flex",
-                                        alignItems: "center",
                                         fontSize: "12px",
                                         margin: "0",
                                         opacity: "0.6",
                                         fontFamily:
                                           "'SF Pro Display', 'SF Pro Text', -apple-system, BlinkMacSystemFont, sans-serif",
+                                        lineHeight: "1.2",
+                                        wordBreak: "break-word",
                                       }}
                                     >
-                                      {/* Creator name */}
-                                      <span
-                                        style={{
-                                          whiteSpace: "nowrap",
-                                          overflow: "hidden",
-                                          textOverflow: "ellipsis",
-                                        }}
-                                      >
+                                      {/* Creator name and rating on same line when possible */}
+                                      <span>
                                         {entry.creator || "Unknown Creator"}
                                       </span>
-
-                                      {/* Star rating - right next to the creator with a spacing */}
                                       {formatRating(entry.rating) && (
                                         <span
                                           style={{
                                             marginLeft: "8px",
                                             fontSize: "12px",
-                                            opacity: "1", // Make it a bit more visible
+                                            opacity: "1",
                                             color: "#111",
-                                            display: "flex",
-                                            alignItems: "center",
                                           }}
                                         >
                                           <span
