@@ -375,9 +375,11 @@ const CategoryPage = () => {
       .gallery-container {
         margin: 0 -20px;
         width: calc(100% + 40px);
-        overflow-x: scroll;
+        overflow-x: auto;
+        overflow-y: hidden;
         cursor: grab;
         user-select: none;
+        -webkit-overflow-scrolling: touch;
       }
       .gallery-wrapper {
         padding-left: 20px;
@@ -500,6 +502,7 @@ const CategoryPage = () => {
           background: "white",
           display: "flex",
           justifyContent: "center",
+          overflowX: "hidden",
         }}
       >
         <div
@@ -511,6 +514,7 @@ const CategoryPage = () => {
             paddingTop: "env(safe-area-inset-top, 0px)",
             fontFamily:
               "'SF Pro Display', 'SF Pro Text', -apple-system, BlinkMacSystemFont, sans-serif",
+            overflowX: "hidden",
           }}
         >
           {/* Content wrapper */}

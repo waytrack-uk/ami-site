@@ -174,6 +174,7 @@ const ArchivePage = () => {
             onChange={handleSearchChange}
             ref={searchInputRef}
             autoComplete="off"
+            autoCapitalize="off"
             data-1p-ignore="true"
           />
           <div className="absolute inset-y-0 left-0 flex items-center pl-4 pointer-events-none">
