@@ -441,7 +441,7 @@ const UserProfile = () => {
 
   return (
     <div className="min-h-screen bg-white flex justify-center">
-      <div className="w-full max-w-[375px] px-4 py-5 pb-[100px] font-['SF_Pro_Display',_-apple-system,_BlinkMacSystemFont,_'Segoe_UI',_Roboto,_sans-serif]">
+      <div className="w-full max-w-[375px] px-2 py-5 pb-[100px] font-['SF_Pro_Display',_-apple-system,_BlinkMacSystemFont,_'Segoe_UI',_Roboto,_sans-serif]">
       {user && (
         <>
           {/* Profile layout with avatar above and username below */}
