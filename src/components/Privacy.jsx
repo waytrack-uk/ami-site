@@ -6,7 +6,7 @@ const Privacy = () => {
       <div className="max-w-4xl mx-auto">
         {/* Policy Header */}
         <h1 className="text-4xl md:text-5xl mb-6 text-gray-900">PRIVACY POLICY</h1>
-        <p className="text-lg text-gray-700 mb-12">Last updated November 24, 2024</p>
+        <p className="text-lg text-gray-700 mb-12">Last updated November 26, 2025</p>
 
         {/* Summary Section */}
         <section className="mb-16">
@@ -260,7 +260,7 @@ const Privacy = () => {
        <section id="request" className="mb-16">
          <h2 className="text-3xl mb-6 text-gray-900">13. HOW CAN YOU REVIEW, UPDATE, OR DELETE THE DATA WE COLLECT FROM YOU?</h2>
          <div className="space-y-6 text-lg text-gray-800">
-           <p>Based on the applicable laws of your country, you may have the right to request access to the personal information we collect from you, change that information, or delete it. To request to review, update, or delete your personal information, please visit: getarchive.co.uk.</p>
+           <p>Based on the applicable laws of your country, you may have the right to request access to the personal information we collect from you, change that information, or delete it. To request to review, update, or delete your personal information, please visit: archive.mobi.</p>
          </div>
        </section>
       </div>

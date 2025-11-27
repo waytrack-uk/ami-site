@@ -14,7 +14,7 @@ const CategoryPage = () => {
   const [isDesktop, setIsDesktop] = useState(false);
   const [showDownloadButton, setShowDownloadButton] = useState(true);
   const [loadedImages, setLoadedImages] = useState(new Set());
-  const buttonText = "See more on Ami!";
+  const buttonText = "See more on archive!";
   const [hasFetched, setHasFetched] = useState(false);
 
   // Function to get solid color based on category name - now returns white

@@ -23,7 +23,7 @@ const UserProfile = () => {
     books: [],
   });
   const [showDownloadButton, setShowDownloadButton] = useState(true);
-  const [buttonText, setButtonText] = useState("Join on Ami");
+  const [buttonText, setButtonText] = useState("Join on archive");
   const [isMobile, setIsMobile] = useState(window.innerWidth < 768);
 
   // Add a new state for tracking entry loading
@@ -35,11 +35,11 @@ const UserProfile = () => {
   // Update button text when user data is available
   useEffect(() => {
     if (user && user.fullName) {
-      setButtonText(`Join ${user.fullName} on Ami`);
+      setButtonText(`Join ${user.fullName} on archive`);
     } else if (user && user.username) {
-      setButtonText(`Join ${user.username} on Ami`);
+      setButtonText(`Join ${user.username} on archive`);
     } else {
-      setButtonText("Join on Ami");
+      setButtonText("Join on archive");
     }
   }, [user]);
 

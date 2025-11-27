@@ -6,12 +6,12 @@ const Terms = () => {
       <div className="max-w-4xl mx-auto">
         {/* EULA Header */}
         <h1 className="text-4xl md:text-5xl mb-6 text-gray-900">END USER LICENCE AGREEMENT</h1>
-        <p className="text-lg text-gray-700 mb-12">Last updated January 31, 2025</p>
+        <p className="text-lg text-gray-700 mb-12">Last updated November 26, 2025</p>
 
         {/* Introduction */}
         <section className="mb-16">
           <p className="text-lg text-gray-800 mb-6">
-            Archive: Be Curious is licensed to You (End-User) by Waytrack LTD, located and registered at Flat 176, Clarence Gate Gardens, Glentworth St, London, NW1 6AR, England ('Licensor'), for use only under the terms of this Licence Agreement.
+            Archive is licensed to You (End-User) by Waytrack LTD, located and registered at Flat 176, Clarence Gate Gardens, Glentworth St, London, NW1 6AR, England ('Licensor'), for use only under the terms of this Licence Agreement.
           </p>
           <p className="text-lg text-gray-800 mb-6">
             By downloading the Licensed Application from Apple's software distribution platform ('App Store'), and any update thereto (as permitted by this Licence Agreement), You indicate that You agree to be bound by all of the terms and conditions of this Licence Agreement, and that You accept this Licence Agreement. App Store is referred to in this Licence Agreement as 'Services'.
@@ -71,7 +71,7 @@ const Terms = () => {
         <section id="application" className="mb-16">
           <h2 className="text-3xl mb-6 text-gray-900">1. THE APPLICATION</h2>
           <div className="space-y-6 text-lg text-gray-800">
-            <p>Archive: Be Curious ('Licensed Application') is a piece of software created to Help users connect, record, and discover tv, music, podcasts, and books with friends — and customised for iOS mobile devices ('Devices'). It is used to Record and share the tv, music, podcasts, and books that a user has watched, listened to and read.</p>
+            <p>Archive ('Licensed Application') is a piece of software created to Help users connect, record, and discover tv, music, podcasts, and books with friends — and customised for iOS mobile devices ('Devices'). It is used to Record and share the tv, music, podcasts, and books that a user has watched, listened to and read.</p>
             <p>Furthermore, it is used to Write opinions on the tv, music, podcasts, and books that a user watches, listens to, or reads.</p>
           </div>
         </section>
@@ -126,7 +126,7 @@ const Terms = () => {
         <section id="data" className="mb-16">
           <h2 className="text-3xl mb-6 text-gray-900">5. USE OF DATA</h2>
           <div className="space-y-6 text-lg text-gray-800">
-            <p>You acknowledge that Licensor will be able to access and adjust Your downloaded Licensed Application content and Your personal information, and that Licensor's use of such material and information is subject to Your legal agreements with Licensor and Licensor's privacy policy: <a href="https://getarchive.co.uk/privacy/" className="text-blue-600 hover:text-blue-800 underline">https://getarchive.co.uk/privacy/</a>.</p>
+            <p>You acknowledge that Licensor will be able to access and adjust Your downloaded Licensed Application content and Your personal information, and that Licensor's use of such material and information is subject to Your legal agreements with Licensor and Licensor's privacy policy: <a href="https://archive.mobi/privacy/" className="text-blue-600 hover:text-blue-800 underline">https://archive.mobi/privacy/</a>.</p>
             
             <p>You acknowledge that the Licensor may periodically collect and use technical data and related information about your device, system, and application software, and peripherals, offer product support, facilitate the software updates, and for purposes of providing other services to you (if any) related to the Licensed Application. Licensor may also use this information to improve its products or to provide services or technologies to you, as long as it is in a form that does not personally identify you.</p>
           </div>

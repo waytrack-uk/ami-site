@@ -4,13 +4,13 @@ const Contact = () => {
   const contacts = [
     {
       name: "Alexander Bloom",
-      position: "Co-founder",
+      position: "Archive team",
       email: "alexanderbloom@waytrack.co.uk",
       imageUrl: "/alexanderbloom.png"
     },
     {
       name: "Aron Finkelstein",
-      position: "Co-founder", 
+      position: "Archive team", 
       email: "aronfinkelstein@waytrack.co.uk",
       imageUrl: "/aronfinkelstein.jpg"
     }
